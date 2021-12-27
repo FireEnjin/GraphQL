@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "A set of tools for working with GraphQL",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
   "scripts": {
     "build": "tsc",
     "start": "tsc -w",
