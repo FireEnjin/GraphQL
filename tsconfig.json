@@ -6,6 +6,7 @@
       "esnext.asynciterable"
     ],
     "module": "commonjs",
+    "declaration": true,
     "noImplicitReturns": false,
     "outDir": "dist",
     "sourceMap": false,
