@@ -38,7 +38,7 @@ export default function createResolver<T extends ClassType>(options: {
   authUpdate: string[];
   authCreate: string[];
   authDelete: string[];
-}) {
+}): any {
   const hookOptions = { type: "graphql" };
   if (options.inputType) {
     @Resolver((of) => options.returnType)
