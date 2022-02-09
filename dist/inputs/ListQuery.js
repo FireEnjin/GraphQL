@@ -14,102 +14,102 @@ const type_graphql_1 = require("type-graphql");
 let ListQueryInput = class ListQueryInput {
 };
 __decorate([
-    type_graphql_1.Field({
+    (0, type_graphql_1.Field)({
         description: "The search query",
     }),
     __metadata("design:type", String)
 ], ListQueryInput.prototype, "query", void 0);
 __decorate([
-    type_graphql_1.Field(() => [String], {
+    (0, type_graphql_1.Field)(() => [String], {
         description: "A list of tags to search for",
     }),
     __metadata("design:type", Array)
 ], ListQueryInput.prototype, "tags", void 0);
 __decorate([
-    type_graphql_1.Field({
+    (0, type_graphql_1.Field)({
         description: "The number of results to return",
     }),
     __metadata("design:type", Number)
 ], ListQueryInput.prototype, "limit", void 0);
 __decorate([
-    type_graphql_1.Field({
+    (0, type_graphql_1.Field)({
         description: "Order the list of results by this field",
     }),
     __metadata("design:type", String)
 ], ListQueryInput.prototype, "orderBy", void 0);
 __decorate([
-    type_graphql_1.Field(() => String, {
+    (0, type_graphql_1.Field)(() => String, {
         description: "The directions to order the results",
     }),
     __metadata("design:type", String)
 ], ListQueryInput.prototype, "orderDirection", void 0);
 __decorate([
-    type_graphql_1.Field(() => graphql_type_json_1.GraphQLJSONObject, {
+    (0, type_graphql_1.Field)(() => graphql_type_json_1.GraphQLJSONObject, {
         description: "Where a column matches a value",
     }),
     __metadata("design:type", Object)
 ], ListQueryInput.prototype, "whereEqual", void 0);
 __decorate([
-    type_graphql_1.Field(() => graphql_type_json_1.GraphQLJSONObject, {
+    (0, type_graphql_1.Field)(() => graphql_type_json_1.GraphQLJSONObject, {
         description: "Where a column is less than a value",
     }),
     __metadata("design:type", Object)
 ], ListQueryInput.prototype, "whereLessThan", void 0);
 __decorate([
-    type_graphql_1.Field(() => graphql_type_json_1.GraphQLJSONObject, {
+    (0, type_graphql_1.Field)(() => graphql_type_json_1.GraphQLJSONObject, {
         description: "Where a column is less than or equal to a value",
     }),
     __metadata("design:type", Object)
 ], ListQueryInput.prototype, "whereLessThanOrEqual", void 0);
 __decorate([
-    type_graphql_1.Field(() => graphql_type_json_1.GraphQLJSONObject, {
+    (0, type_graphql_1.Field)(() => graphql_type_json_1.GraphQLJSONObject, {
         description: "Where a column is greater than a value",
     }),
     __metadata("design:type", Object)
 ], ListQueryInput.prototype, "whereGreaterThan", void 0);
 __decorate([
-    type_graphql_1.Field(() => graphql_type_json_1.GraphQLJSONObject, {
+    (0, type_graphql_1.Field)(() => graphql_type_json_1.GraphQLJSONObject, {
         description: "Where a column is greater than or equal to a value",
     }),
     __metadata("design:type", Object)
 ], ListQueryInput.prototype, "whereGreaterThanOrEqual", void 0);
 __decorate([
-    type_graphql_1.Field(() => graphql_type_json_1.GraphQLJSONObject, {
+    (0, type_graphql_1.Field)(() => graphql_type_json_1.GraphQLJSONObject, {
         description: "Where a list of values for a column contains a value",
     }),
     __metadata("design:type", Object)
 ], ListQueryInput.prototype, "whereArrayContains", void 0);
 __decorate([
-    type_graphql_1.Field(() => graphql_type_json_1.GraphQLJSONObject, {
+    (0, type_graphql_1.Field)(() => graphql_type_json_1.GraphQLJSONObject, {
         description: "Where a column value is any of array of values",
     }),
     __metadata("design:type", Object)
 ], ListQueryInput.prototype, "whereArrayContainsAny", void 0);
 __decorate([
-    type_graphql_1.Field(() => graphql_type_json_1.GraphQLJSONObject, {
+    (0, type_graphql_1.Field)(() => graphql_type_json_1.GraphQLJSONObject, {
         description: "Where a column value is in an array of values",
     }),
     __metadata("design:type", Object)
 ], ListQueryInput.prototype, "whereIn", void 0);
 __decorate([
-    type_graphql_1.Field({
+    (0, type_graphql_1.Field)({
         description: "The ID of the last result from the current page",
     }),
     __metadata("design:type", String)
 ], ListQueryInput.prototype, "next", void 0);
 __decorate([
-    type_graphql_1.Field({
+    (0, type_graphql_1.Field)({
         description: "The ID of the first result from the current",
     }),
     __metadata("design:type", String)
 ], ListQueryInput.prototype, "back", void 0);
 __decorate([
-    type_graphql_1.Field({
+    (0, type_graphql_1.Field)({
         description: "The page of results to get",
     }),
     __metadata("design:type", Number)
 ], ListQueryInput.prototype, "page", void 0);
 ListQueryInput = __decorate([
-    type_graphql_1.InputType({ description: "The default input to use for all list queries" })
+    (0, type_graphql_1.InputType)({ description: "The default input to use for all list queries" })
 ], ListQueryInput);
 exports.default = ListQueryInput;

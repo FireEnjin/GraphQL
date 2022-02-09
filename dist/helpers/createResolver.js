@@ -32,7 +32,7 @@ function createResolver(options) {
         let CrudResolver = class CrudResolver {
             async [_a = options.findQueryName
                 ? options.findQueryName
-                : `${uncapFirstLetter_1.default(options.modelName)}`](id, context) {
+                : `${(0, uncapFirstLetter_1.default)(options.modelName)}`](id, context) {
                 if (options.model.onAuth &&
                     typeof options.model.onAuth === "function" &&
                     !(await options.model.onAuth("find", {
@@ -53,7 +53,7 @@ function createResolver(options) {
             }
             async [_b = options.listQueryName
                 ? options.listQueryName
-                : `${uncapFirstLetter_1.default(options.collectionName)}`](data, context) {
+                : `${(0, uncapFirstLetter_1.default)(options.collectionName)}`](data, context) {
                 if (options.model.onAuth &&
                     typeof options.model.onAuth === "function" &&
                     !(await options.model.onAuth("list", data, {
@@ -191,91 +191,91 @@ function createResolver(options) {
             }
         };
         __decorate([
-            type_graphql_1.Authorized(options.authFind
+            (0, type_graphql_1.Authorized)(options.authFind
                 ? options.authFind
                 : options.authRead
                     ? options.authRead
                     : []),
-            type_graphql_1.Query((returns) => options.returnType, {
+            (0, type_graphql_1.Query)((returns) => options.returnType, {
                 nullable: true,
                 description: `Get a specific ${options.modelName} document from the ${options.collectionName} collection.`,
             }),
-            __param(0, type_graphql_1.Arg("id")),
-            __param(1, type_graphql_1.Ctx()),
+            __param(0, (0, type_graphql_1.Arg)("id")),
+            __param(1, (0, type_graphql_1.Ctx)()),
             __metadata("design:type", Function),
             __metadata("design:paramtypes", [String, Object]),
             __metadata("design:returntype", Promise)
         ], CrudResolver.prototype, _a, null);
         __decorate([
-            type_graphql_1.Authorized(options.authList
+            (0, type_graphql_1.Authorized)(options.authList
                 ? options.authList
                 : options.authRead
                     ? options.authRead
                     : []),
-            type_graphql_1.Query((returns) => options.listReturnType
+            (0, type_graphql_1.Query)((returns) => options.listReturnType
                 ? options.listReturnType
                 : [options.returnType], {
                 nullable: true,
                 description: `Get a list of ${options.modelName} documents from the ${options.collectionName} collection.`,
             }),
-            __param(0, type_graphql_1.Arg("data", () => options.listQueryInputType
+            __param(0, (0, type_graphql_1.Arg)("data", () => options.listQueryInputType
                 ? options.listQueryInputType
                 : ListQuery_1.default, { nullable: true })),
-            __param(1, type_graphql_1.Ctx()),
+            __param(1, (0, type_graphql_1.Ctx)()),
             __metadata("design:type", Function),
             __metadata("design:paramtypes", [Object, Object]),
             __metadata("design:returntype", Promise)
         ], CrudResolver.prototype, _b, null);
         __decorate([
-            type_graphql_1.Authorized(options.authCreate
+            (0, type_graphql_1.Authorized)(options.authCreate
                 ? options.authCreate
                 : options.authWrite
                     ? options.authWrite
                     : []),
-            type_graphql_1.Mutation((returns) => options.returnType),
-            __param(0, type_graphql_1.Arg("data", () => options.inputType, {
+            (0, type_graphql_1.Mutation)((returns) => options.returnType),
+            __param(0, (0, type_graphql_1.Arg)("data", () => options.inputType, {
                 description: `Add a new ${options.modelName} document to the ${options.collectionName} collection.`,
             })),
-            __param(1, type_graphql_1.Ctx()),
+            __param(1, (0, type_graphql_1.Ctx)()),
             __metadata("design:type", Function),
             __metadata("design:paramtypes", [Object, Object]),
             __metadata("design:returntype", Promise)
         ], CrudResolver.prototype, _c, null);
         __decorate([
-            type_graphql_1.Authorized(options.authUpdate
+            (0, type_graphql_1.Authorized)(options.authUpdate
                 ? options.authUpdate
                 : options.authWrite
                     ? options.authWrite
                     : []),
-            type_graphql_1.Mutation((returns) => options.returnType),
-            __param(0, type_graphql_1.Arg("id", () => String, {
+            (0, type_graphql_1.Mutation)((returns) => options.returnType),
+            __param(0, (0, type_graphql_1.Arg)("id", () => String, {
                 description: `The ID of the ${options.modelName} document in the ${options.collectionName} collection`,
             })),
-            __param(1, type_graphql_1.Arg("data", () => (options.editType ? options.editType : options.inputType), {
+            __param(1, (0, type_graphql_1.Arg)("data", () => (options.editType ? options.editType : options.inputType), {
                 description: `Update a ${options.modelName} document in the ${options.collectionName} collection.`,
             })),
-            __param(2, type_graphql_1.Ctx()),
+            __param(2, (0, type_graphql_1.Ctx)()),
             __metadata("design:type", Function),
             __metadata("design:paramtypes", [String, Object, Object]),
             __metadata("design:returntype", Promise)
         ], CrudResolver.prototype, _d, null);
         __decorate([
-            type_graphql_1.Authorized(options.authDelete
+            (0, type_graphql_1.Authorized)(options.authDelete
                 ? options.authDelete
                 : options.authWrite
                     ? options.authWrite
                     : []),
-            type_graphql_1.Mutation((returns) => options.returnType),
-            __param(0, type_graphql_1.Arg("id", () => String, {
+            (0, type_graphql_1.Mutation)((returns) => options.returnType),
+            __param(0, (0, type_graphql_1.Arg)("id", () => String, {
                 description: `The ID of the ${options.modelName} document being deleted in the ${options.collectionName} collection`,
             })),
-            __param(1, type_graphql_1.Ctx()),
+            __param(1, (0, type_graphql_1.Ctx)()),
             __metadata("design:type", Function),
             __metadata("design:paramtypes", [String, Object]),
             __metadata("design:returntype", Promise)
         ], CrudResolver.prototype, _e, null);
         CrudResolver = __decorate([
-            type_graphql_1.Resolver((of) => options.returnType)
+            (0, type_graphql_1.Resolver)((of) => options.returnType)
         ], CrudResolver);
         return CrudResolver;
     }
@@ -283,7 +283,7 @@ function createResolver(options) {
         let BaseResolver = class BaseResolver {
             async [_f = options.findQueryName
                 ? options.findQueryName
-                : `${uncapFirstLetter_1.default(options.modelName)}`](id, context) {
+                : `${(0, uncapFirstLetter_1.default)(options.modelName)}`](id, context) {
                 if (options.model.onAuth &&
                     typeof options.model.onAuth === "function" &&
                     !(await options.model.onAuth("find", {
@@ -304,7 +304,7 @@ function createResolver(options) {
             }
             async [_g = options.listQueryName
                 ? options.listQueryName
-                : `${uncapFirstLetter_1.default(options.collectionName)}`](data, context) {
+                : `${(0, uncapFirstLetter_1.default)(options.collectionName)}`](data, context) {
                 if (options.model.onAuth &&
                     typeof options.model.onAuth === "function" &&
                     !(await options.model.onAuth("list", data, {
@@ -333,43 +333,43 @@ function createResolver(options) {
             }
         };
         __decorate([
-            type_graphql_1.Authorized(options.authFind
+            (0, type_graphql_1.Authorized)(options.authFind
                 ? options.authFind
                 : options.authRead
                     ? options.authRead
                     : []),
-            type_graphql_1.Query((returns) => options.returnType, {
+            (0, type_graphql_1.Query)((returns) => options.returnType, {
                 nullable: true,
                 description: `Get a specific ${options.modelName} document from the ${options.collectionName} collection.`,
             }),
-            __param(0, type_graphql_1.Arg("id")),
-            __param(1, type_graphql_1.Ctx()),
+            __param(0, (0, type_graphql_1.Arg)("id")),
+            __param(1, (0, type_graphql_1.Ctx)()),
             __metadata("design:type", Function),
             __metadata("design:paramtypes", [String, Object]),
             __metadata("design:returntype", Promise)
         ], BaseResolver.prototype, _f, null);
         __decorate([
-            type_graphql_1.Authorized(options.authList
+            (0, type_graphql_1.Authorized)(options.authList
                 ? options.authList
                 : options.authRead
                     ? options.authRead
                     : []),
-            type_graphql_1.Query((returns) => options.listReturnType
+            (0, type_graphql_1.Query)((returns) => options.listReturnType
                 ? options.listReturnType
                 : [options.returnType], {
                 nullable: true,
                 description: `Get a list of ${options.modelName} documents from the ${options.collectionName} collection.`,
             }),
-            __param(0, type_graphql_1.Arg("data", () => options.listQueryInputType
+            __param(0, (0, type_graphql_1.Arg)("data", () => options.listQueryInputType
                 ? options.listQueryInputType
                 : ListQuery_1.default, { nullable: true })),
-            __param(1, type_graphql_1.Ctx()),
+            __param(1, (0, type_graphql_1.Ctx)()),
             __metadata("design:type", Function),
             __metadata("design:paramtypes", [Object, Object]),
             __metadata("design:returntype", Promise)
         ], BaseResolver.prototype, _g, null);
         BaseResolver = __decorate([
-            type_graphql_1.Resolver((of) => options.returnType)
+            (0, type_graphql_1.Resolver)((of) => options.returnType)
         ], BaseResolver);
         return BaseResolver;
     }

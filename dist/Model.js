@@ -15,13 +15,13 @@ class default_1 {
         if (options) {
             this.collectionName = options.collectionName
                 ? options.collectionName
-                : pluralize_1.default(options.docSchema.name);
+                : (0, pluralize_1.default)(options.docSchema.name);
         }
         if (options && options.docSchema) {
-            this.Resolver = createResolver_1.default({
+            this.Resolver = (0, createResolver_1.default)({
                 ...options,
                 returnType: options.docSchema,
-                modelName: capFirstLetter_1.default(options.docSchema.name),
+                modelName: (0, capFirstLetter_1.default)(options.docSchema.name),
                 collectionName: this.collectionName,
                 model: this,
             });
@@ -68,7 +68,7 @@ class default_1 {
                         ? JSON.parse(options[where])
                         : options[where];
                 for (const whereKey of Object.keys(options[where])) {
-                    query = query.where(whereKey, operatorMap[where], date_fns_1.isValid(date_fns_1.parseISO(options[where][whereKey]))
+                    query = query.where(whereKey, operatorMap[where], (0, date_fns_1.isValid)((0, date_fns_1.parseISO)(options[where][whereKey]))
                         ? new Date(Date.parse(options[where][whereKey]))
                         : options[where][whereKey]);
                 }
@@ -154,7 +154,7 @@ class default_1 {
      * @see https://fireorm.js.org/#/classes/basefirestorerepository
      */
     repo() {
-        return fireorm_1.GetRepository(this.options.docSchema);
+        return (0, fireorm_1.GetRepository)(this.options.docSchema);
     }
     /**
      * Run a transaction on the collection
