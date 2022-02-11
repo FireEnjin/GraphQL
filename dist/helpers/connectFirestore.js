@@ -37,6 +37,9 @@ function connectFirestore(options) {
         appConfig.databaseURL = `https://${serviceAccount.project_id}.firebaseio.com`;
         appConfig.storageBucket = `${serviceAccount.project_id}.appspot.com`;
     }
+    if (options === null || options === void 0 ? void 0 : options.storageBucket) {
+        appConfig.storageBucket = options.storageBucket;
+    }
     admin.initializeApp(appConfig);
     const firestore = admin.firestore();
     const firebaseConfig = {

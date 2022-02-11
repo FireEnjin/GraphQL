@@ -6,4 +6,5 @@ export default function connectFirestore(options?: {
     ssl?: string;
     ignoreUndefinedProperties?: boolean;
     projectId?: string;
+    storageBucket?: string;
 }): admin.firestore.Firestore;
