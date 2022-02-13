@@ -1,5 +1,5 @@
 import * as admin from "firebase-admin";
-export default function connectFirestore(options?: {
+export default function connect(options?: {
     serviceAccount?: string | boolean;
     emulate?: boolean;
     host?: string;

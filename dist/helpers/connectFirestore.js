@@ -21,13 +21,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const admin = __importStar(require("firebase-admin"));
 const fireorm = __importStar(require("fireorm"));
-function connectFirestore(options) {
+function connect(options) {
     var _a;
     const appConfig = {};
     if (!!(options === null || options === void 0 ? void 0 : options.emulate) ||
         (options === null || options === void 0 ? void 0 : options.projectId) ||
         ((_a = process === null || process === void 0 ? void 0 : process.env) === null || _a === void 0 ? void 0 : _a.GCLOUD_PROJECT)) {
         appConfig.projectId = (options === null || options === void 0 ? void 0 : options.projectId) || process.env.GCLOUD_PROJECT;
+        appConfig.storageBucket =
+            (options === null || options === void 0 ? void 0 : options.storageBucket) || `${appConfig.projectId}.appspot.com`;
     }
     if (options === null || options === void 0 ? void 0 : options.serviceAccount) {
         const serviceAccount = require(typeof (options === null || options === void 0 ? void 0 : options.serviceAccount) === "string"
@@ -35,10 +37,8 @@ function connectFirestore(options) {
             : `${process.cwd()}/service-account.json`);
         appConfig.credential = admin.credential.cert(serviceAccount);
         appConfig.databaseURL = `https://${serviceAccount.project_id}.firebaseio.com`;
-        appConfig.storageBucket = `${serviceAccount.project_id}.appspot.com`;
-    }
-    if (options === null || options === void 0 ? void 0 : options.storageBucket) {
-        appConfig.storageBucket = options.storageBucket;
+        appConfig.storageBucket =
+            (options === null || options === void 0 ? void 0 : options.storageBucket) || `${serviceAccount.project_id}.appspot.com`;
     }
     admin.initializeApp(appConfig);
     const firestore = admin.firestore();
@@ -53,4 +53,4 @@ function connectFirestore(options) {
     fireorm.initialize(firestore);
     return firestore;
 }
-exports.default = connectFirestore;
+exports.default = connect;

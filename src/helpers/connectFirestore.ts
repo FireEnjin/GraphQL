@@ -1,7 +1,7 @@
 import * as admin from "firebase-admin";
 import * as fireorm from "fireorm";
 
-export default function connectFirestore(options?: {
+export default function connect(options?: {
   serviceAccount?: string | boolean;
   emulate?: boolean;
   host?: string;
@@ -17,6 +17,8 @@ export default function connectFirestore(options?: {
     process?.env?.GCLOUD_PROJECT
   ) {
     appConfig.projectId = options?.projectId || process.env.GCLOUD_PROJECT;
+    appConfig.storageBucket =
+      options?.storageBucket || `${appConfig.projectId}.appspot.com`;
   }
   if (options?.serviceAccount) {
     const serviceAccount = require(typeof options?.serviceAccount === "string"
@@ -24,15 +26,10 @@ export default function connectFirestore(options?: {
       : `${process.cwd()}/service-account.json`);
     appConfig.credential = admin.credential.cert(serviceAccount);
     appConfig.databaseURL = `https://${serviceAccount.project_id}.firebaseio.com`;
-    appConfig.storageBucket = `${serviceAccount.project_id}.appspot.com`;
+    appConfig.storageBucket =
+      options?.storageBucket || `${serviceAccount.project_id}.appspot.com`;
   }
-
-  if (options?.storageBucket) {
-    appConfig.storageBucket = options.storageBucket;
-  }
-
   admin.initializeApp(appConfig);
-
   const firestore = admin.firestore();
   const firebaseConfig: FirebaseFirestore.Settings = {
     ignoreUndefinedProperties:
