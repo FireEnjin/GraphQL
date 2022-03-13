@@ -5,7 +5,7 @@ export default function env(key?: string, fallback?: any) {
   let config = {};
 
   try {
-    config = require(path.join(__dirname, "../environment.json"));
+    config = require(path.join(process.cwd(), "environment.json"));
   } catch (error) {
     console.log("No environment.json file found in the root.");
   }

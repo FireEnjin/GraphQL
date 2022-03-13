@@ -28,7 +28,7 @@ const path = __importStar(require("path"));
 function env(key, fallback) {
     let config = {};
     try {
-        config = require(path.join(__dirname, "../environment.json"));
+        config = require(path.join(process.cwd(), "environment.json"));
     }
     catch (error) {
         console.log("No environment.json file found in the root.");
