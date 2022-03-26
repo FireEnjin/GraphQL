@@ -31,13 +31,15 @@ export default class<T extends IEntity> {
       addMutationName?: string;
       editMutationName?: string;
       deleteMutationName?: string;
-      authFind?: string[];
-      authList?: string[];
-      authRead?: string[];
-      authWrite?: string[];
-      authUpdate?: string[];
-      authCreate?: string[];
-      authDelete?: string[];
+      auth: {
+        find?: string[];
+        list?: string[];
+        read?: string[];
+        write?: string[];
+        update?: string[];
+        create?: string[];
+        delete?: string[];
+      };
     }
   ) {
     if (options) {

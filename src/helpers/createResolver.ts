@@ -31,26 +31,22 @@ export default function createResolver<T extends ClassType>(options: {
   addMutationName: string;
   editMutationName: string;
   deleteMutationName: string;
-  authFind: string[];
-  authList: string[];
-  authRead: string[];
-  authWrite: string[];
-  authUpdate: string[];
-  authCreate: string[];
-  authDelete: string[];
+  auth?: {
+    find?: string[];
+    list?: string[];
+    read?: string[];
+    write?: string[];
+    update?: string[];
+    create?: string[];
+    delete?: string[];
+  };
 }): any {
   const hookOptions = { type: "graphql" };
   if (options.inputType) {
-    @Resolver((of) => options.returnType)
+    @Resolver(() => options.returnType)
     class CrudResolver {
-      @Authorized(
-        options.authFind
-          ? options.authFind
-          : options.authRead
-          ? options.authRead
-          : []
-      )
-      @Query((returns) => options.returnType, {
+      @Authorized(options?.auth?.find || options?.auth?.read || null)
+      @Query(() => options.returnType, {
         nullable: true,
         description: `Get a specific ${options.modelName} document from the ${options.collectionName} collection.`,
       })
@@ -60,6 +56,7 @@ export default function createResolver<T extends ClassType>(options: {
         @Arg("id") id: string,
         @Ctx() context?: any
       ): Promise<T> {
+        const roles = options?.auth?.find || options?.auth?.read || null;
         if (
           options.model.onAuth &&
           typeof options.model.onAuth === "function" &&
@@ -71,6 +68,7 @@ export default function createResolver<T extends ClassType>(options: {
             {
               ...hookOptions,
               context,
+              roles,
             }
           ))
         )
@@ -78,23 +76,25 @@ export default function createResolver<T extends ClassType>(options: {
         const doc =
           options.model.onBeforeFind &&
           typeof options.model.onBeforeFind === "function"
-            ? await options.model.onBeforeFind(id, { ...hookOptions, context })
+            ? await options.model.onBeforeFind(id, {
+                ...hookOptions,
+                context,
+                roles,
+              })
             : await options.model.find(id);
         return options.model.onAfterFind &&
           typeof options.model.onAfterFind === "function"
-          ? await options.model.onAfterFind(doc, { ...hookOptions, context })
+          ? await options.model.onAfterFind(doc, {
+              ...hookOptions,
+              context,
+              roles,
+            })
           : doc;
       }
 
-      @Authorized(
-        options.authList
-          ? options.authList
-          : options.authRead
-          ? options.authRead
-          : []
-      )
+      @Authorized(options?.auth?.list || options?.auth?.read || null)
       @Query(
-        (returns) =>
+        () =>
           options.listReturnType
             ? options.listReturnType
             : [options.returnType],
@@ -117,12 +117,14 @@ export default function createResolver<T extends ClassType>(options: {
         data?: any,
         @Ctx() context?: any
       ): Promise<any> {
+        const roles = options?.auth?.list || options?.auth?.read || null;
         if (
           options.model.onAuth &&
           typeof options.model.onAuth === "function" &&
           !(await options.model.onAuth("list", data, {
             ...hookOptions,
             context,
+            roles,
           }))
         )
           return null;
@@ -132,10 +134,12 @@ export default function createResolver<T extends ClassType>(options: {
             ? await options.model.onBeforeList(data, {
                 ...hookOptions,
                 context,
+                roles,
               })
             : await options.model.paginate(data, options.model.onPaginate, {
                 ...hookOptions,
                 context,
+                roles,
               });
         return options.model.onAfterList &&
           typeof options.model.onAfterList === "function"
@@ -143,18 +147,13 @@ export default function createResolver<T extends ClassType>(options: {
               ...hookOptions,
               context,
               requestData: data,
+              roles,
             })
           : docs;
       }
 
-      @Authorized(
-        options.authCreate
-          ? options.authCreate
-          : options.authWrite
-          ? options.authWrite
-          : []
-      )
-      @Mutation((returns) => options.returnType)
+      @Authorized(options?.auth?.create || options?.auth?.write || null)
+      @Mutation(() => options.returnType)
       async [options.addMutationName
         ? options.addMutationName
         : `add${options.modelName}`](
@@ -164,12 +163,14 @@ export default function createResolver<T extends ClassType>(options: {
         data: any,
         @Ctx() context?: any
       ) {
+        const roles = options?.auth?.create || options?.auth?.write || null;
         if (
           options.model.onAuth &&
           typeof options.model.onAuth === "function" &&
           !(await options.model.onAuth("add", data, {
             ...hookOptions,
             context,
+            roles,
           }))
         )
           return null;
@@ -179,12 +180,14 @@ export default function createResolver<T extends ClassType>(options: {
             ? await options.model.onBeforeAdd(data, {
                 ...hookOptions,
                 context,
+                roles,
               })
             : options.model.onBeforeWrite &&
               typeof options.model.onBeforeWrite === "function"
             ? await options.model.onBeforeWrite(data, {
                 ...hookOptions,
                 context,
+                roles,
               })
             : data;
         if (docData === false) {
@@ -198,24 +201,20 @@ export default function createResolver<T extends ClassType>(options: {
           ? await options.model.onAfterAdd(newDoc, {
               ...hookOptions,
               requestData: data,
+              roles,
             })
           : options.model.onAfterWrite &&
             typeof options.model.onAfterWrite === "function"
           ? await options.model.onAfterWrite(newDoc, {
               ...hookOptions,
               requestData: data,
+              roles,
             })
           : newDoc;
       }
 
-      @Authorized(
-        options.authUpdate
-          ? options.authUpdate
-          : options.authWrite
-          ? options.authWrite
-          : []
-      )
-      @Mutation((returns) => options.returnType)
+      @Authorized(options?.auth?.update || options?.auth?.write || null)
+      @Mutation(() => options.returnType)
       async [options.editMutationName
         ? options.editMutationName
         : `edit${options.modelName}`](
@@ -233,6 +232,7 @@ export default function createResolver<T extends ClassType>(options: {
         data: any,
         @Ctx() context?: any
       ) {
+        const roles = options?.auth?.update || options?.auth?.write || null;
         if (
           options.model.onAuth &&
           typeof options.model.onAuth === "function" &&
@@ -242,6 +242,7 @@ export default function createResolver<T extends ClassType>(options: {
             {
               ...hookOptions,
               context,
+              roles,
             }
           ))
         )
@@ -254,6 +255,7 @@ export default function createResolver<T extends ClassType>(options: {
                 {
                   ...hookOptions,
                   context,
+                  roles,
                 }
               )
             : options.model.onBeforeWrite &&
@@ -263,6 +265,7 @@ export default function createResolver<T extends ClassType>(options: {
                 {
                   ...hookOptions,
                   context,
+                  roles,
                 }
               )
             : data;
@@ -277,24 +280,20 @@ export default function createResolver<T extends ClassType>(options: {
           ? await options.model.onAfterEdit(doc, {
               ...hookOptions,
               requestData: data,
+              roles,
             })
           : options.model.onAfterWrite &&
             typeof options.model.onAfterWrite === "function"
           ? await options.model.onAfterWrite(doc, {
               ...hookOptions,
               requestData: data,
+              roles,
             })
           : doc;
       }
 
-      @Authorized(
-        options.authDelete
-          ? options.authDelete
-          : options.authWrite
-          ? options.authWrite
-          : []
-      )
-      @Mutation((returns) => options.returnType)
+      @Authorized(options?.auth?.delete || options?.auth?.write || null)
+      @Mutation(() => options.returnType)
       async [options.deleteMutationName
         ? options.deleteMutationName
         : `delete${options.modelName}`](
@@ -304,6 +303,7 @@ export default function createResolver<T extends ClassType>(options: {
         id: string,
         @Ctx() context?: any
       ) {
+        const roles = options?.auth?.delete || options?.auth?.write || null;
         if (
           options.model.onAuth &&
           typeof options.model.onAuth === "function" &&
@@ -313,6 +313,7 @@ export default function createResolver<T extends ClassType>(options: {
             {
               ...hookOptions,
               context,
+              roles,
             }
           ))
         )
@@ -327,7 +328,7 @@ export default function createResolver<T extends ClassType>(options: {
               id,
               ...modelBefore,
             },
-            hookOptions
+            { ...hookOptions, roles }
           );
           if (res === false) {
             return null;
@@ -339,7 +340,7 @@ export default function createResolver<T extends ClassType>(options: {
           typeof options.model.onAfterDelete === "function"
           ? await options.model.onAfterDelete(
               { id, ...modelBefore },
-              hookOptions
+              { ...hookOptions, roles }
             )
           : { id, ...modelBefore };
       }
@@ -347,16 +348,10 @@ export default function createResolver<T extends ClassType>(options: {
 
     return CrudResolver;
   } else {
-    @Resolver((of) => options.returnType)
+    @Resolver(() => options.returnType)
     class BaseResolver {
-      @Authorized(
-        options.authFind
-          ? options.authFind
-          : options.authRead
-          ? options.authRead
-          : []
-      )
-      @Query((returns) => options.returnType, {
+      @Authorized(options?.auth?.find || options?.auth?.read || null)
+      @Query(() => options.returnType, {
         nullable: true,
         description: `Get a specific ${options.modelName} document from the ${options.collectionName} collection.`,
       })
@@ -366,6 +361,7 @@ export default function createResolver<T extends ClassType>(options: {
         @Arg("id") id: string,
         @Ctx() context?: any
       ): Promise<T> {
+        const roles = options?.auth?.find || options?.auth?.read || null;
         if (
           options.model.onAuth &&
           typeof options.model.onAuth === "function" &&
@@ -377,6 +373,7 @@ export default function createResolver<T extends ClassType>(options: {
             {
               ...hookOptions,
               context,
+              roles,
             }
           ))
         )
@@ -384,23 +381,25 @@ export default function createResolver<T extends ClassType>(options: {
         const doc =
           options.model.onBeforeFind &&
           typeof options.model.onBeforeFind === "function"
-            ? await options.model.onBeforeFind(id, { ...hookOptions, context })
+            ? await options.model.onBeforeFind(id, {
+                ...hookOptions,
+                context,
+                roles,
+              })
             : await options.model.find(id);
         return options.model.onAfterFind &&
           typeof options.model.onAfterFind === "function"
-          ? await options.model.onAfterFind(doc, { ...hookOptions, context })
+          ? await options.model.onAfterFind(doc, {
+              ...hookOptions,
+              context,
+              roles,
+            })
           : doc;
       }
 
-      @Authorized(
-        options.authList
-          ? options.authList
-          : options.authRead
-          ? options.authRead
-          : []
-      )
+      @Authorized(options?.auth?.list || options?.auth?.read || null)
       @Query(
-        (returns) =>
+        () =>
           options.listReturnType
             ? options.listReturnType
             : [options.returnType],
@@ -423,12 +422,14 @@ export default function createResolver<T extends ClassType>(options: {
         data?: any,
         @Ctx() context?: any
       ): Promise<any> {
+        const roles = options?.auth?.list || options?.auth?.read || null;
         if (
           options.model.onAuth &&
           typeof options.model.onAuth === "function" &&
           !(await options.model.onAuth("list", data, {
             ...hookOptions,
             context,
+            roles,
           }))
         )
           return null;
@@ -439,18 +440,19 @@ export default function createResolver<T extends ClassType>(options: {
             ? await options.model.onBeforeList(data, {
                 ...hookOptions,
                 context,
+                roles,
               })
             : await options.model.paginate(data, options.model.onPaginate, {
                 context,
-                roles: options.authList
-                  ? options.authList
-                  : options.authRead
-                  ? options.authRead
-                  : [],
+                roles,
               });
         return options.model.onAfterList &&
           typeof options.model.onAfterList === "function"
-          ? await options.model.onAfterList(docs, { ...hookOptions, context })
+          ? await options.model.onAfterList(docs, {
+              ...hookOptions,
+              context,
+              roles,
+            })
           : docs;
       }
     }
