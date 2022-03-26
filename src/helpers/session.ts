@@ -1,21 +1,24 @@
 import getTokenFromHeader from "./getTokenFromHeader";
 
-export default async function session(options?: {
+export default async function session({
+  req,
+  res,
+  db,
+}: {
   req?: any;
   res?: any;
   db?: FirebaseFirestore.Firestore;
 }) {
-  const req = options?.req || null;
-  const res = options?.res || null;
-  const db = options?.db || null;
-
+  const headers = req?.headers || req?.Headers || null;
   return {
     res,
-    headers: req?.headers || null,
+    headers,
     db,
-    referrer: req?.headers?.referer || null,
+    referrer: headers?.referer || null,
     token:
-      req?.headers?.authorization &&
-      (await getTokenFromHeader(req?.headers?.authorization)),
+      (headers?.authorization || headers?.Authorization) &&
+      (await getTokenFromHeader(
+        headers?.authorization || headers?.Authorization
+      )),
   };
 }

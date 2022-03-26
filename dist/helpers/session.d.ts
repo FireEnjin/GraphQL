@@ -1,4 +1,4 @@
-export default function session(options?: {
+export default function session({ req, res, db, }: {
     req?: any;
     res?: any;
     db?: FirebaseFirestore.Firestore;
