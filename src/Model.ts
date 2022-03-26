@@ -31,7 +31,7 @@ export default class<T extends IEntity> {
       addMutationName?: string;
       editMutationName?: string;
       deleteMutationName?: string;
-      auth: {
+      auth?: {
         find?: string[];
         list?: string[];
         read?: string[];
