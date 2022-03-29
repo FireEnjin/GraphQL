@@ -353,6 +353,7 @@ export default class<T extends IEntity> {
       type?: "graphql" | "rest";
       requestData?: any;
       context?: any;
+      roles?: string[];
     }
   ): Promise<any>;
 
@@ -369,6 +370,7 @@ export default class<T extends IEntity> {
       type?: "graphdql" | "rest";
       requestData?: any;
       context?: any;
+      roles?: string[];
     }
   ): Promise<any>;
 
@@ -385,6 +387,7 @@ export default class<T extends IEntity> {
       type?: "graphql" | "rest";
       requestData?: any;
       context?: any;
+      roles?: string[];
     }
   ): Promise<any>;
 
@@ -401,6 +404,7 @@ export default class<T extends IEntity> {
       type?: "graphdql" | "rest";
       requestData?: any;
       context?: any;
+      roles?: string[];
     }
   ): Promise<any>;
 
@@ -417,6 +421,7 @@ export default class<T extends IEntity> {
       type?: "graphql" | "rest";
       requestData?: any;
       context?: any;
+      roles?: string[];
     }
   ): Promise<any>;
 
@@ -433,6 +438,7 @@ export default class<T extends IEntity> {
       type?: "graphdql" | "rest";
       requestData?: any;
       context?: any;
+      roles?: string[];
     }
   ): Promise<any>;
 
@@ -449,6 +455,7 @@ export default class<T extends IEntity> {
       type?: "graphql" | "rest";
       requestData?: any;
       context?: any;
+      roles?: string[];
     }
   ): Promise<any>;
 
@@ -465,6 +472,7 @@ export default class<T extends IEntity> {
       type?: "graphdql" | "rest";
       requestData?: any;
       context?: any;
+      roles?: string[];
     }
   ): Promise<any>;
 
@@ -481,6 +489,7 @@ export default class<T extends IEntity> {
       type?: "graphql" | "rest";
       requestData?: any;
       context?: any;
+      roles?: string[];
     }
   ): Promise<any[]>;
 
@@ -497,6 +506,7 @@ export default class<T extends IEntity> {
       type?: "graphdql" | "rest";
       requestData?: any;
       context?: any;
+      roles?: string[];
     }
   ): Promise<any[]>;
 
@@ -513,6 +523,7 @@ export default class<T extends IEntity> {
       type?: "graphql" | "rest";
       requestData?: any;
       context?: any;
+      roles?: string[];
     }
   ): Promise<any>;
 
@@ -529,6 +540,7 @@ export default class<T extends IEntity> {
       type?: "graphdql" | "rest";
       requestData?: any;
       context?: any;
+      roles?: string[];
     }
   ): Promise<any>;
 }

@@ -218,6 +218,7 @@ export default class<T extends IEntity> {
         type?: "graphql" | "rest";
         requestData?: any;
         context?: any;
+        roles?: string[];
     }): Promise<any>;
     /**
      * Hook that runs after a document is added.
@@ -230,6 +231,7 @@ export default class<T extends IEntity> {
         type?: "graphdql" | "rest";
         requestData?: any;
         context?: any;
+        roles?: string[];
     }): Promise<any>;
     /**
      * Hook that runs before a document is edited. If it returns a falsey value it will stop the edit return null.
@@ -242,6 +244,7 @@ export default class<T extends IEntity> {
         type?: "graphql" | "rest";
         requestData?: any;
         context?: any;
+        roles?: string[];
     }): Promise<any>;
     /**
      * Hook that runs after a document is edited.
@@ -254,6 +257,7 @@ export default class<T extends IEntity> {
         type?: "graphdql" | "rest";
         requestData?: any;
         context?: any;
+        roles?: string[];
     }): Promise<any>;
     /**
      * Hook that runs before a document is written. If it returns a falsey value it will stop the write return null.
@@ -266,6 +270,7 @@ export default class<T extends IEntity> {
         type?: "graphql" | "rest";
         requestData?: any;
         context?: any;
+        roles?: string[];
     }): Promise<any>;
     /**
      * Hook that runs after a document is written.
@@ -278,6 +283,7 @@ export default class<T extends IEntity> {
         type?: "graphdql" | "rest";
         requestData?: any;
         context?: any;
+        roles?: string[];
     }): Promise<any>;
     /**
      * Hook that runs before a document is deleted. If it returns a falsey value it will stop the delete return null.
@@ -290,6 +296,7 @@ export default class<T extends IEntity> {
         type?: "graphql" | "rest";
         requestData?: any;
         context?: any;
+        roles?: string[];
     }): Promise<any>;
     /**
      * Hook that runs after a document is deleted.
@@ -302,6 +309,7 @@ export default class<T extends IEntity> {
         type?: "graphdql" | "rest";
         requestData?: any;
         context?: any;
+        roles?: string[];
     }): Promise<any>;
     /**
      * Hook that runs before retrieving a list of documents.
@@ -314,6 +322,7 @@ export default class<T extends IEntity> {
         type?: "graphql" | "rest";
         requestData?: any;
         context?: any;
+        roles?: string[];
     }): Promise<any[]>;
     /**
      * Hook that runs after returning a list of documents
@@ -326,6 +335,7 @@ export default class<T extends IEntity> {
         type?: "graphdql" | "rest";
         requestData?: any;
         context?: any;
+        roles?: string[];
     }): Promise<any[]>;
     /**
      * Hook that runs before a document is retrieved.
@@ -338,6 +348,7 @@ export default class<T extends IEntity> {
         type?: "graphql" | "rest";
         requestData?: any;
         context?: any;
+        roles?: string[];
     }): Promise<any>;
     /**
      * Hook that runs after a document is retrieved.
@@ -350,5 +361,6 @@ export default class<T extends IEntity> {
         type?: "graphdql" | "rest";
         requestData?: any;
         context?: any;
+        roles?: string[];
     }): Promise<any>;
 }
