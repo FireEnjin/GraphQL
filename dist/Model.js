@@ -11,6 +11,10 @@ const createResolver_1 = __importDefault(require("./helpers/createResolver"));
 class default_1 {
     constructor(options) {
         this.options = options;
+        /**
+         * Do you want to keep createdAt and updatedAt timestamps automatically?
+         * @default true
+         */
         this.timestamps = true;
         if (options) {
             this.collectionName = options.collectionName
@@ -43,13 +47,14 @@ class default_1 {
             whereArrayContainsAny: "array-contains-any",
             whereIn: "in",
         };
-        if (options.orderBy) {
-            for (const order of options.orderBy ? options.orderBy.split(",") : []) {
+        const orderBy = (options === null || options === void 0 ? void 0 : options.orderBy) || this.order;
+        if (orderBy) {
+            for (const order of orderBy.split(",")) {
                 const [orderBy, direction] = order.split(":");
                 query = query.orderBy(orderBy, direction ? direction : "asc");
             }
         }
-        else if (this.timestamps) {
+        else if (this.timestamps && !this.order) {
             query = query.orderBy("createdAt", "desc");
         }
         for (const where of [
@@ -83,9 +88,7 @@ class default_1 {
                 .get();
             if (lastDoc.exists) {
                 const docData = lastDoc.data();
-                query = query[options.next ? "startAfter" : "endBefore"](options.orderBy
-                    ? docData[options.orderBy.split(":")[0]]
-                    : docData.createdAt);
+                query = query[options.next ? "startAfter" : "endBefore"](orderBy ? docData[orderBy.split(":")[0]] : docData.createdAt);
             }
         }
         if (options.limit && !((_a = options === null || options === void 0 ? void 0 : options.query) === null || _a === void 0 ? void 0 : _a.length)) {

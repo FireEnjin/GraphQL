@@ -15,8 +15,20 @@ import createResolver from "./helpers/createResolver";
 
 export default class<T extends IEntity> {
   Resolver: any;
+  /**
+   * The name of the collection in Firestore
+   */
   collectionName: string;
+  /**
+   * Do you want to keep createdAt and updatedAt timestamps automatically?
+   * @default true
+   */
   timestamps = true;
+  /**
+   * The default order to use for this collection
+   * @default null;
+   */
+  order: string;
 
   constructor(
     protected options: {
@@ -114,13 +126,13 @@ export default class<T extends IEntity> {
       whereArrayContainsAny: "array-contains-any",
       whereIn: "in",
     };
-
-    if (options.orderBy) {
-      for (const order of options.orderBy ? options.orderBy.split(",") : []) {
+    const orderBy = options?.orderBy || this.order;
+    if (orderBy) {
+      for (const order of orderBy.split(",")) {
         const [orderBy, direction] = order.split(":");
         query = query.orderBy(orderBy, direction ? direction : "asc");
       }
-    } else if (this.timestamps) {
+    } else if (this.timestamps && !this.order) {
       query = query.orderBy("createdAt", "desc");
     }
 
@@ -162,9 +174,7 @@ export default class<T extends IEntity> {
       if (lastDoc.exists) {
         const docData: any = lastDoc.data();
         query = query[options.next ? "startAfter" : "endBefore"](
-          options.orderBy
-            ? docData[options.orderBy.split(":")[0]]
-            : docData.createdAt
+          orderBy ? docData[orderBy.split(":")[0]] : docData.createdAt
         );
       }
     }

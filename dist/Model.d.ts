@@ -24,8 +24,20 @@ export default class<T extends IEntity> {
         };
     };
     Resolver: any;
+    /**
+     * The name of the collection in Firestore
+     */
     collectionName: string;
+    /**
+     * Do you want to keep createdAt and updatedAt timestamps automatically?
+     * @default true
+     */
     timestamps: boolean;
+    /**
+     * The default order to use for this collection
+     * @default null;
+     */
+    order: string;
     constructor(options: {
         docSchema: any;
         inputType?: any;
