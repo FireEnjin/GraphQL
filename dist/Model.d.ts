@@ -1,5 +1,7 @@
-import { IFireOrmQueryLine, IFirestoreVal, IOrderByParams, IEntity, IQueryBuilder } from "fireorm";
+import { IFireOrmQueryLine, IFirestoreVal, IOrderByParams, IEntity, IWherePropParam, ITransactionRepository } from "fireorm";
 import { firestore } from "firebase-admin";
+import { FirestoreBatch } from "fireorm/lib/src/Batch/FirestoreBatch";
+import { FirestoreBatchSingleRepository } from "fireorm/lib/src/Batch/FirestoreBatchSingleRepository";
 export default class<T extends IEntity> {
     protected options: {
         docSchema: any;
@@ -22,6 +24,7 @@ export default class<T extends IEntity> {
             create?: string[];
             delete?: string[];
         };
+        enableGraphQL?: boolean;
     };
     Resolver: any;
     /**
@@ -38,6 +41,10 @@ export default class<T extends IEntity> {
      * @default null;
      */
     order: string;
+    /**
+     * The batches saved for this commit
+     */
+    batch?: FirestoreBatch | FirestoreBatchSingleRepository<IEntity>;
     constructor(options: {
         docSchema: any;
         inputType?: any;
@@ -59,6 +66,7 @@ export default class<T extends IEntity> {
             create?: string[];
             delete?: string[];
         };
+        enableGraphQL?: boolean;
     });
     /**
      * Paginate a collection to page results
@@ -135,6 +143,16 @@ export default class<T extends IEntity> {
      */
     create(modelObject: Partial<T>): Promise<T>;
     /**
+     * Create a batch of requests for this collection.
+     * @see https://fireorm.js.org/#/Batches
+     * @returns FirestoreBatchSingleRepository<IEntity>
+     */
+    createBatch(): FirestoreBatchSingleRepository<IEntity>;
+    /**
+     * Commit the current batch of requests
+     */
+    commit(): Promise<void> | Promise<firestore.WriteResult[]>;
+    /**
      * Delete a document from a collection
      * @param id The id of the document to delete
      */
@@ -147,10 +165,14 @@ export default class<T extends IEntity> {
      */
     execute(queries: IFireOrmQueryLine[], limitVal?: number, orderByObj?: IOrderByParams): Promise<T[]>;
     /**
-     * Get a specific document's data
+     * Get a specific document's data or resolve query
      * @param id The id of the document
      */
-    find(id: string): Promise<T>;
+    find<I = T>(id?: string): Promise<I>;
+    /**
+     * Get one document from a list of results
+     */
+    findOne(): Promise<T>;
     /**
      * Get the name of the collection the model is attached to
      */
@@ -168,57 +190,88 @@ export default class<T extends IEntity> {
      * Run a transaction on the collection
      * @param executor The transaction executor function
      */
-    runTransaction(executor: any): Promise<unknown>;
+    runTransaction(executor: (tran: ITransactionRepository<T>) => Promise<any>): Promise<any>;
     /**
      * Limit the number of records returned
      * @param limitTo The limit of data to return
      */
-    limit(limitTo: number): IQueryBuilder<T>;
+    limit(limitTo: number): import("fireorm").IQueryBuilder<T>;
     /**
      * Order a list of documents by a specific property in ascending order
      * @param prop The property to order ascending by
      */
-    orderByAscending(prop: any): IQueryBuilder<T>;
+    orderByAscending(prop: IWherePropParam<T>): import("fireorm").IQueryBuilder<T>;
     /**
      * Order a list of documents by a specific property in descending order
      * @param prop The property to order descending by
      */
-    orderByDescending(prop: any): IQueryBuilder<T>;
+    orderByDescending(prop: IWherePropParam<T>): import("fireorm").IQueryBuilder<T>;
     /**
      * Update the data on a document from the collection
      * @param data The data to update on the document
      */
     update(data: Partial<T>): Promise<T>;
     /**
+     * Validate a document's content against the model
+     * @see https://fireorm.js.org/#/Validation
+     * @param data The data from the document
+     * @returns An array of class-validator errors
+     */
+    validate(data: Partial<T>): Promise<import("fireorm/lib/src/Errors/ValidationError").ValidationError[]>;
+    /**
      * Get a list of documents where property equals value
      * @param prop The property to check eqaulity of
      * @param value The value to be equal to
      */
-    whereEqualTo(prop: any, value: IFirestoreVal): IQueryBuilder<T>;
+    whereEqualTo(prop: IWherePropParam<T>, value: IFirestoreVal): import("fireorm").IQueryBuilder<T>;
+    /**
+     * Get a list of documents where property doesn't equal a value
+     * @param prop The property to check eqaulity of
+     * @param value The value to be equal to
+     */
+    whereNotEqualTo(prop: IWherePropParam<T>, value: IFirestoreVal): import("fireorm").IQueryBuilder<T>;
     /**
      * Get a list of documents where property greater than value
      * @param prop The property to check eqaulity of
      * @param value The value to be greater than to
      */
-    whereGreaterThan(prop: any, value: IFirestoreVal): IQueryBuilder<T>;
+    whereGreaterThan(prop: IWherePropParam<T>, value: IFirestoreVal): import("fireorm").IQueryBuilder<T>;
     /**
      * Get a list of documents where property less than value
      * @param prop The property to check eqaulity of
      * @param value The value to be less than to
      */
-    whereLessThan(prop: any, value: IFirestoreVal): IQueryBuilder<T>;
+    whereLessThan(prop: IWherePropParam<T>, value: IFirestoreVal): import("fireorm").IQueryBuilder<T>;
     /**
      * Get a list of documents where property less than or equal to value
      * @param prop The property to check eqaulity of
      * @param value The value to be less than or equal to
      */
-    whereLessOrEqualThan(prop: any, value: IFirestoreVal): IQueryBuilder<T>;
+    whereLessOrEqualThan(prop: IWherePropParam<T>, value: IFirestoreVal): import("fireorm").IQueryBuilder<T>;
     /**
-     * Get a list of documents where property is equal to one of a list of values
+     * Get a list of documents where property's list of values includes a given value
      * @param prop The property to search for values
      * @param value The values to check for
      */
-    whereArrayContains(prop: any, value: IFirestoreVal): IQueryBuilder<T>;
+    whereArrayContains(prop: IWherePropParam<T>, value: IFirestoreVal): import("fireorm").IQueryBuilder<T>;
+    /**
+     * Get a list of documents where property's list of values exists in another list of values
+     * @param prop The property to search for values
+     * @param value The values to check for
+     */
+    whereArrayContainsAny(prop: IWherePropParam<T>, value: IFirestoreVal[]): import("fireorm").IQueryBuilder<T>;
+    /**
+     * Get a list of documents where property matches any in a list of values
+     * @param prop The property to search for valuese
+     * @param val The values to check for
+     */
+    whereIn(prop: IWherePropParam<T>, val: IFirestoreVal[]): import("fireorm").IQueryBuilder<T>;
+    /**
+     * Get a list of documents where property doesn't match any in a list of values
+     * @param prop The property to search for valuese
+     * @param val The values to check for
+     */
+    whereNotIn(prop: IWherePropParam<T>, val: IFirestoreVal[]): import("fireorm").IQueryBuilder<T>;
     /**
      * Hook that runs before a document is added. If it returns a falsey value it will stop the creation return null.
      * @param data The input data for the request

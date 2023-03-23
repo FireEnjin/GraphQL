@@ -1,10 +1,11 @@
 import {
-  GetRepository,
+  getRepository,
   IFireOrmQueryLine,
   IFirestoreVal,
   IOrderByParams,
   IEntity,
-  IQueryBuilder,
+  IWherePropParam,
+  ITransactionRepository,
 } from "fireorm";
 import { firestore } from "firebase-admin";
 import pluralize from "pluralize";
@@ -12,6 +13,8 @@ import { isValid, parseISO } from "date-fns";
 
 import capFirstLetter from "./helpers/capFirstLetter";
 import createResolver from "./helpers/createResolver";
+import { FirestoreBatch } from "fireorm/lib/src/Batch/FirestoreBatch";
+import { FirestoreBatchSingleRepository } from "fireorm/lib/src/Batch/FirestoreBatchSingleRepository";
 
 export default class<T extends IEntity> {
   Resolver: any;
@@ -29,6 +32,10 @@ export default class<T extends IEntity> {
    * @default null;
    */
   order: string;
+  /**
+   * The batches saved for this commit
+   */
+  batch?: FirestoreBatch | FirestoreBatchSingleRepository<IEntity>;
 
   constructor(
     protected options: {
@@ -52,6 +59,7 @@ export default class<T extends IEntity> {
         create?: string[];
         delete?: string[];
       };
+      enableGraphQL?: boolean;
     }
   ) {
     if (options) {
@@ -59,7 +67,7 @@ export default class<T extends IEntity> {
         ? options.collectionName
         : pluralize(options.docSchema.name);
     }
-    if (options && options.docSchema) {
+    if (options && options.enableGraphQL && options.docSchema) {
       this.Resolver = createResolver({
         ...options,
         returnType: options.docSchema,
@@ -203,12 +211,29 @@ export default class<T extends IEntity> {
    * Create a new document and add it to the collection
    * @param modelObject The data to add to the document
    */
-  create(modelObject: Partial<T>): Promise<T> {
+  create(modelObject: Partial<T>) {
     return this.repo().create(
       this.timestamps
         ? { createdAt: new Date(), ...modelObject }
         : (modelObject as any)
     );
+  }
+
+  /**
+   * Create a batch of requests for this collection.
+   * @see https://fireorm.js.org/#/Batches
+   * @returns FirestoreBatchSingleRepository<IEntity>
+   */
+  createBatch() {
+    this.batch = this.repo().createBatch();
+    return this.batch;
+  }
+
+  /**
+   * Commit the current batch of requests
+   */
+  commit() {
+    return this.batch.commit();
   }
 
   /**
@@ -229,16 +254,23 @@ export default class<T extends IEntity> {
     queries: IFireOrmQueryLine[],
     limitVal?: number,
     orderByObj?: IOrderByParams
-  ): Promise<T[]> {
+  ) {
     return this.repo().execute(queries, limitVal, orderByObj);
   }
 
   /**
-   * Get a specific document's data
+   * Get a specific document's data or resolve query
    * @param id The id of the document
    */
-  async find(id: string): Promise<T> {
-    return this.repo().findById(id);
+  async find<I = T>(id?: string) {
+    return (id ? this.repo().findById(id) : this.repo().find()) as I;
+  }
+
+  /**
+   * Get one document from a list of results
+   */
+  async findOne() {
+    return this.repo().findOne();
   }
 
   /**
@@ -260,14 +292,14 @@ export default class<T extends IEntity> {
    * @see https://fireorm.js.org/#/classes/basefirestorerepository
    */
   repo() {
-    return GetRepository<T>(this.options.docSchema);
+    return getRepository<T>(this.options.docSchema);
   }
 
   /**
    * Run a transaction on the collection
    * @param executor The transaction executor function
    */
-  runTransaction(executor) {
+  runTransaction(executor: (tran: ITransactionRepository<T>) => Promise<any>) {
     return this.repo().runTransaction(executor);
   }
 
@@ -275,15 +307,15 @@ export default class<T extends IEntity> {
    * Limit the number of records returned
    * @param limitTo The limit of data to return
    */
-  limit(limitTo: number): IQueryBuilder<T> {
-    return (this.repo() as any).limit(limitTo);
+  limit(limitTo: number) {
+    return this.repo().limit(limitTo);
   }
 
   /**
    * Order a list of documents by a specific property in ascending order
    * @param prop The property to order ascending by
    */
-  orderByAscending(prop): IQueryBuilder<T> {
+  orderByAscending(prop: IWherePropParam<T>) {
     return this.repo().orderByAscending(prop);
   }
 
@@ -291,7 +323,7 @@ export default class<T extends IEntity> {
    * Order a list of documents by a specific property in descending order
    * @param prop The property to order descending by
    */
-  orderByDescending(prop): IQueryBuilder<T> {
+  orderByDescending(prop: IWherePropParam<T>) {
     return this.repo().orderByDescending(prop);
   }
 
@@ -299,10 +331,20 @@ export default class<T extends IEntity> {
    * Update the data on a document from the collection
    * @param data The data to update on the document
    */
-  update(data: Partial<T>): Promise<T> {
+  update(data: Partial<T>) {
     return this.repo().update(
-      this.timestamps ? { ...data, updatedAt: new Date() } : (data as any)
+      (this.timestamps ? { ...data, updatedAt: new Date() } : data) as T
     );
+  }
+
+  /**
+   * Validate a document's content against the model
+   * @see https://fireorm.js.org/#/Validation
+   * @param data The data from the document
+   * @returns An array of class-validator errors
+   */
+  async validate(data: Partial<T>) {
+    return this.repo().validate(data as T);
   }
 
   /**
@@ -310,8 +352,17 @@ export default class<T extends IEntity> {
    * @param prop The property to check eqaulity of
    * @param value The value to be equal to
    */
-  whereEqualTo(prop, value: IFirestoreVal): IQueryBuilder<T> {
+  whereEqualTo(prop: IWherePropParam<T>, value: IFirestoreVal) {
     return this.repo().whereEqualTo(prop, value);
+  }
+
+  /**
+   * Get a list of documents where property doesn't equal a value
+   * @param prop The property to check eqaulity of
+   * @param value The value to be equal to
+   */
+  whereNotEqualTo(prop: IWherePropParam<T>, value: IFirestoreVal) {
+    return this.repo().whereNotEqualTo(prop, value);
   }
 
   /**
@@ -319,7 +370,7 @@ export default class<T extends IEntity> {
    * @param prop The property to check eqaulity of
    * @param value The value to be greater than to
    */
-  whereGreaterThan(prop, value: IFirestoreVal): IQueryBuilder<T> {
+  whereGreaterThan(prop: IWherePropParam<T>, value: IFirestoreVal) {
     return this.repo().whereGreaterThan(prop, value);
   }
 
@@ -328,7 +379,7 @@ export default class<T extends IEntity> {
    * @param prop The property to check eqaulity of
    * @param value The value to be less than to
    */
-  whereLessThan(prop, value: IFirestoreVal): IQueryBuilder<T> {
+  whereLessThan(prop: IWherePropParam<T>, value: IFirestoreVal) {
     return this.repo().whereLessThan(prop, value);
   }
 
@@ -337,17 +388,44 @@ export default class<T extends IEntity> {
    * @param prop The property to check eqaulity of
    * @param value The value to be less than or equal to
    */
-  whereLessOrEqualThan(prop, value: IFirestoreVal): IQueryBuilder<T> {
+  whereLessOrEqualThan(prop: IWherePropParam<T>, value: IFirestoreVal) {
     return this.repo().whereLessOrEqualThan(prop, value);
   }
 
   /**
-   * Get a list of documents where property is equal to one of a list of values
+   * Get a list of documents where property's list of values includes a given value
    * @param prop The property to search for values
    * @param value The values to check for
    */
-  whereArrayContains(prop, value: IFirestoreVal): IQueryBuilder<T> {
+  whereArrayContains(prop: IWherePropParam<T>, value: IFirestoreVal) {
     return this.repo().whereArrayContains(prop, value);
+  }
+
+  /**
+   * Get a list of documents where property's list of values exists in another list of values
+   * @param prop The property to search for values
+   * @param value The values to check for
+   */
+  whereArrayContainsAny(prop: IWherePropParam<T>, value: IFirestoreVal[]) {
+    return this.repo().whereArrayContainsAny(prop, value);
+  }
+
+  /**
+   * Get a list of documents where property matches any in a list of values
+   * @param prop The property to search for valuese
+   * @param val The values to check for
+   */
+  whereIn(prop: IWherePropParam<T>, val: IFirestoreVal[]) {
+    return this.repo().whereIn(prop, val);
+  }
+
+  /**
+   * Get a list of documents where property doesn't match any in a list of values
+   * @param prop The property to search for valuese
+   * @param val The values to check for
+   */
+  whereNotIn(prop: IWherePropParam<T>, val: IFirestoreVal[]) {
+    return this.repo().whereNotIn(prop, val);
   }
 
   /**

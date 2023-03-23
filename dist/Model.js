@@ -21,7 +21,7 @@ class default_1 {
                 ? options.collectionName
                 : (0, pluralize_1.default)(options.docSchema.name);
         }
-        if (options && options.docSchema) {
+        if (options && options.enableGraphQL && options.docSchema) {
             this.Resolver = (0, createResolver_1.default)({
                 ...options,
                 returnType: options.docSchema,
@@ -118,6 +118,21 @@ class default_1 {
             : modelObject);
     }
     /**
+     * Create a batch of requests for this collection.
+     * @see https://fireorm.js.org/#/Batches
+     * @returns FirestoreBatchSingleRepository<IEntity>
+     */
+    createBatch() {
+        this.batch = this.repo().createBatch();
+        return this.batch;
+    }
+    /**
+     * Commit the current batch of requests
+     */
+    commit() {
+        return this.batch.commit();
+    }
+    /**
      * Delete a document from a collection
      * @param id The id of the document to delete
      */
@@ -134,11 +149,17 @@ class default_1 {
         return this.repo().execute(queries, limitVal, orderByObj);
     }
     /**
-     * Get a specific document's data
+     * Get a specific document's data or resolve query
      * @param id The id of the document
      */
     async find(id) {
-        return this.repo().findById(id);
+        return (id ? this.repo().findById(id) : this.repo().find());
+    }
+    /**
+     * Get one document from a list of results
+     */
+    async findOne() {
+        return this.repo().findOne();
     }
     /**
      * Get the name of the collection the model is attached to
@@ -157,7 +178,7 @@ class default_1 {
      * @see https://fireorm.js.org/#/classes/basefirestorerepository
      */
     repo() {
-        return (0, fireorm_1.GetRepository)(this.options.docSchema);
+        return (0, fireorm_1.getRepository)(this.options.docSchema);
     }
     /**
      * Run a transaction on the collection
@@ -192,7 +213,16 @@ class default_1 {
      * @param data The data to update on the document
      */
     update(data) {
-        return this.repo().update(this.timestamps ? { ...data, updatedAt: new Date() } : data);
+        return this.repo().update((this.timestamps ? { ...data, updatedAt: new Date() } : data));
+    }
+    /**
+     * Validate a document's content against the model
+     * @see https://fireorm.js.org/#/Validation
+     * @param data The data from the document
+     * @returns An array of class-validator errors
+     */
+    async validate(data) {
+        return this.repo().validate(data);
     }
     /**
      * Get a list of documents where property equals value
@@ -201,6 +231,14 @@ class default_1 {
      */
     whereEqualTo(prop, value) {
         return this.repo().whereEqualTo(prop, value);
+    }
+    /**
+     * Get a list of documents where property doesn't equal a value
+     * @param prop The property to check eqaulity of
+     * @param value The value to be equal to
+     */
+    whereNotEqualTo(prop, value) {
+        return this.repo().whereNotEqualTo(prop, value);
     }
     /**
      * Get a list of documents where property greater than value
@@ -227,12 +265,36 @@ class default_1 {
         return this.repo().whereLessOrEqualThan(prop, value);
     }
     /**
-     * Get a list of documents where property is equal to one of a list of values
+     * Get a list of documents where property's list of values includes a given value
      * @param prop The property to search for values
      * @param value The values to check for
      */
     whereArrayContains(prop, value) {
         return this.repo().whereArrayContains(prop, value);
+    }
+    /**
+     * Get a list of documents where property's list of values exists in another list of values
+     * @param prop The property to search for values
+     * @param value The values to check for
+     */
+    whereArrayContainsAny(prop, value) {
+        return this.repo().whereArrayContainsAny(prop, value);
+    }
+    /**
+     * Get a list of documents where property matches any in a list of values
+     * @param prop The property to search for valuese
+     * @param val The values to check for
+     */
+    whereIn(prop, val) {
+        return this.repo().whereIn(prop, val);
+    }
+    /**
+     * Get a list of documents where property doesn't match any in a list of values
+     * @param prop The property to search for valuese
+     * @param val The values to check for
+     */
+    whereNotIn(prop, val) {
+        return this.repo().whereNotIn(prop, val);
     }
 }
 exports.default = default_1;
