@@ -59,7 +59,7 @@ export default class<T extends IEntity> {
         create?: string[];
         delete?: string[];
       };
-      enableGraphQL?: boolean;
+      disableResolvers?: boolean;
     }
   ) {
     if (options) {
@@ -67,7 +67,7 @@ export default class<T extends IEntity> {
         ? options.collectionName
         : pluralize(options.docSchema.name);
     }
-    if (options && options.enableGraphQL && options.docSchema) {
+    if (options && !options.disableResolvers && options.docSchema) {
       this.Resolver = createResolver({
         ...options,
         returnType: options.docSchema,

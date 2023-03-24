@@ -24,7 +24,7 @@ export default class<T extends IEntity> {
             create?: string[];
             delete?: string[];
         };
-        enableGraphQL?: boolean;
+        disableResolvers?: boolean;
     };
     Resolver: any;
     /**
@@ -66,7 +66,7 @@ export default class<T extends IEntity> {
             create?: string[];
             delete?: string[];
         };
-        enableGraphQL?: boolean;
+        disableResolvers?: boolean;
     });
     /**
      * Paginate a collection to page results

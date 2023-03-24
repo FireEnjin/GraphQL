@@ -21,7 +21,7 @@ class default_1 {
                 ? options.collectionName
                 : (0, pluralize_1.default)(options.docSchema.name);
         }
-        if (options && options.enableGraphQL && options.docSchema) {
+        if (options && !options.disableResolvers && options.docSchema) {
             this.Resolver = (0, createResolver_1.default)({
                 ...options,
                 returnType: options.docSchema,
