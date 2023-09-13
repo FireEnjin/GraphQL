@@ -151,7 +151,7 @@ export default class<T extends IEntity> {
     /**
      * Commit the current batch of requests
      */
-    commit(): Promise<void> | Promise<firestore.WriteResult[]>;
+    commit(): Promise<firestore.WriteResult[]> | Promise<void>;
     /**
      * Delete a document from a collection
      * @param id The id of the document to delete
