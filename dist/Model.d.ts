@@ -71,7 +71,7 @@ export default class<T extends IEntity> {
     /**
      * Paginate a collection to page results
      */
-    paginate(options: {
+    paginate(options?: {
         query?: string;
         orderBy?: string;
         limit?: number;
@@ -101,7 +101,7 @@ export default class<T extends IEntity> {
         whereIn?: {
             [key: string]: any;
         };
-    }, onPaginate: (query: any, queryOptions: {
+    }, onPaginate?: (query: any, queryOptions: {
         orderBy?: string;
         limit?: number;
         next?: string;
@@ -130,10 +130,10 @@ export default class<T extends IEntity> {
         whereIn?: {
             [key: string]: any;
         };
-    }, hookOptions: {
+    }, hookOptions?: {
         context: any;
         type: string;
-    }) => any, hookOptions: {
+    }) => any, hookOptions?: {
         context: any;
         type: string;
     }): Promise<T[]>;

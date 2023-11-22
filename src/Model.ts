@@ -97,7 +97,7 @@ export default class<T extends IEntity> {
       whereArrayContainsAny?: { [key: string]: any };
       whereIn?: { [key: string]: any };
     } = {},
-    onPaginate: (
+    onPaginate?: (
       query,
       queryOptions: {
         orderBy?: string;
@@ -113,12 +113,12 @@ export default class<T extends IEntity> {
         whereArrayContainsAny?: { [key: string]: any };
         whereIn?: { [key: string]: any };
       },
-      hookOptions: {
+      hookOptions?: {
         context: any;
         type: string;
       }
     ) => any,
-    hookOptions: {
+    hookOptions?: {
       context: any;
       type: string;
     }
