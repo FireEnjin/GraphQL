@@ -8,6 +8,7 @@ const pluralize_1 = __importDefault(require("pluralize"));
 const date_fns_1 = require("date-fns");
 const capFirstLetter_1 = __importDefault(require("./helpers/capFirstLetter"));
 const createResolver_1 = __importDefault(require("./helpers/createResolver"));
+const setByPath_1 = __importDefault(require("./helpers/setByPath"));
 class default_1 {
     constructor(options) {
         this.options = options;
@@ -157,10 +158,13 @@ class default_1 {
         const data = (await (id
             ? this.repo().findById(id)
             : this.repo().find()));
-        const queryMap = {};
         const firestore = this.ref().firestore;
         if (relationships) {
-            console.log(relationships);
+            const queryMap = Object.entries(relationships).reduce((acc, [path, config]) => {
+                (0, setByPath_1.default)(acc, path, config);
+                return acc;
+            }, {});
+            console.log(queryMap);
             for (const [fieldPath, config] of Object.entries(relationships)) {
                 if (!config)
                     continue;

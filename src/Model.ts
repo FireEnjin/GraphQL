@@ -15,6 +15,7 @@ import capFirstLetter from "./helpers/capFirstLetter";
 import createResolver from "./helpers/createResolver";
 import { FirestoreBatch } from "fireorm/lib/src/Batch/FirestoreBatch";
 import { FirestoreBatchSingleRepository } from "fireorm/lib/src/Batch/FirestoreBatchSingleRepository";
+import setByPath from "./helpers/setByPath";
 
 export default class<T extends IEntity> {
   Resolver: any;
@@ -273,10 +274,16 @@ export default class<T extends IEntity> {
     const data = (await (id
       ? this.repo().findById(id)
       : this.repo().find())) as I;
-    const queryMap = {};
     const firestore = this.ref().firestore;
     if (relationships) {
-      console.log(relationships);
+      const queryMap = Object.entries(relationships).reduce(
+        (acc: any, [path, config]) => {
+          setByPath(acc, path, config);
+          return acc;
+        },
+        {}
+      );
+      console.log(queryMap);
       for (const [fieldPath, config] of Object.entries(relationships)) {
         if (!config) continue;
         const fieldValue = data[fieldPath];
