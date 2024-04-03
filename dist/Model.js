@@ -154,23 +154,30 @@ class default_1 {
      * @param id The id of the document
      */
     async find(id, relationships = {}) {
-        var _a, _b;
         const data = (await (id
             ? this.repo().findById(id)
             : this.repo().find()));
         const firestore = this.ref().firestore;
+        const resolveLevel = async (fieldMap, contextData, callback) => {
+            var _a;
+            console.log(fieldMap, contextData);
+            for (const key of Object.keys(fieldMap)) {
+                const config = fieldMap[key];
+                console.log(key, config);
+                if (typeof callback === "function")
+                    contextData[key] = await callback(key, config);
+                if (typeof config === "object" && ((_a = Object.keys(config)) === null || _a === void 0 ? void 0 : _a.length))
+                    resolveLevel(config, contextData[key], callback);
+            }
+        };
         if (relationships) {
             const queryMap = Object.entries(relationships).reduce((acc, [path, config]) => {
                 (0, setByPath_1.default)(acc, path, config);
                 return acc;
             }, {});
-            console.log(queryMap);
-            for (const [fieldPath, config] of Object.entries(relationships)) {
-                if (!config)
-                    continue;
+            await resolveLevel(queryMap, data, async (fieldPath, { collectionPath }) => {
+                var _a, _b;
                 const fieldValue = data[fieldPath];
-                const { collectionPath } = config;
-                console.log(fieldValue, collectionPath);
                 data[fieldPath] = Array.isArray(data[fieldPath])
                     ? (await Promise.all(data[fieldPath].map(({ id: foreignId, path }) => firestore.doc(path).get()))).map((doc) => ({
                         ...doc.data(),
@@ -193,7 +200,7 @@ class default_1 {
                                     : fieldValue,
                             }
                             : null;
-            }
+            });
         }
         return data;
     }

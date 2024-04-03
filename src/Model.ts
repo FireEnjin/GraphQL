@@ -275,6 +275,21 @@ export default class<T extends IEntity> {
       ? this.repo().findById(id)
       : this.repo().find())) as I;
     const firestore = this.ref().firestore;
+    const resolveLevel = async (
+      fieldMap: any,
+      contextData: any,
+      callback: (key: string, values: any) => Promise<any>
+    ) => {
+      console.log(fieldMap, contextData);
+      for (const key of Object.keys(fieldMap)) {
+        const config = fieldMap[key];
+        console.log(key, config);
+        if (typeof callback === "function")
+          contextData[key] = await callback(key, config);
+        if (typeof config === "object" && Object.keys(config)?.length)
+          resolveLevel(config, contextData[key], callback);
+      }
+    };
     if (relationships) {
       const queryMap = Object.entries(relationships).reduce(
         (acc: any, [path, config]) => {
@@ -283,47 +298,46 @@ export default class<T extends IEntity> {
         },
         {}
       );
-      console.log(queryMap);
-      for (const [fieldPath, config] of Object.entries(relationships)) {
-        if (!config) continue;
-        const fieldValue = data[fieldPath];
-        const { collectionPath } = config;
-        console.log(fieldValue, collectionPath);
-
-        data[fieldPath] = Array.isArray(data[fieldPath])
-          ? (
-              await Promise.all(
-                data[fieldPath].map(({ id: foreignId, path }) =>
-                  firestore.doc(path).get()
+      await resolveLevel(
+        queryMap,
+        data,
+        async (fieldPath, { collectionPath }) => {
+          const fieldValue = data[fieldPath];
+          data[fieldPath] = Array.isArray(data[fieldPath])
+            ? (
+                await Promise.all(
+                  data[fieldPath].map(({ id: foreignId, path }) =>
+                    firestore.doc(path).get()
+                  )
                 )
+              ).map(
+                (doc: firestore.DocumentSnapshot<firestore.DocumentData>) => ({
+                  ...doc.data(),
+                  id: doc.id,
+                })
               )
-            ).map(
-              (doc: firestore.DocumentSnapshot<firestore.DocumentData>) => ({
-                ...doc.data(),
-                id: doc.id,
-              })
-            )
-          : fieldValue?.id
-          ? {
-              ...(await firestore.doc(fieldValue?.path).get()).data(),
-              id: fieldValue?.id,
-            }
-          : typeof fieldValue === "string"
-          ? {
-              ...(
-                await (collectionPath
-                  ? firestore.collection(collectionPath)
-                  : firestore
-                )
-                  .doc(fieldValue)
-                  .get()
-              ).data(),
-              id: collectionPath
-                ? collectionPath?.split("/")?.pop?.()
-                : fieldValue,
-            }
-          : null;
-      }
+            : fieldValue?.id
+            ? {
+                ...(await firestore.doc(fieldValue?.path).get()).data(),
+                id: fieldValue?.id,
+              }
+            : typeof fieldValue === "string"
+            ? {
+                ...(
+                  await (collectionPath
+                    ? firestore.collection(collectionPath)
+                    : firestore
+                  )
+                    .doc(fieldValue)
+                    .get()
+                ).data(),
+                id: collectionPath
+                  ? collectionPath?.split("/")?.pop?.()
+                  : fieldValue,
+              }
+            : null;
+        }
+      );
     }
     return data;
   }
