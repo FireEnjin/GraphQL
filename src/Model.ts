@@ -270,7 +270,9 @@ export default class<T extends IEntity> {
       };
     } = {}
   ) {
-    const data = (id ? this.repo().findById(id) : this.repo().find()) as I;
+    const data = (await (id
+      ? this.repo().findById(id)
+      : this.repo().find())) as I;
     const queryMap = {};
     const firestore = this.ref().firestore;
     if (relationships) {
