@@ -262,8 +262,58 @@ export default class<T extends IEntity> {
    * Get a specific document's data or resolve query
    * @param id The id of the document
    */
-  async find<I = T>(id?: string) {
-    return (id ? this.repo().findById(id) : this.repo().find()) as I;
+  async find<I = T>(
+    id?: string,
+    relationships: {
+      [fieldPath: string]: {
+        collectionPath?: string;
+      };
+    } = {}
+  ) {
+    const data = (id ? this.repo().findById(id) : this.repo().find()) as I;
+    const queryMap = {};
+    const firestore = this.ref().firestore;
+    if (relationships) {
+      for (const [fieldPath, config] of Object.entries(relationships)) {
+        if (!config) continue;
+        const fieldValue = data[fieldPath];
+        const { collectionPath } = config;
+        data[fieldPath] = Array.isArray(data[fieldPath])
+          ? (
+              await Promise.all(
+                data[fieldPath].map(({ id: foreignId, path }) =>
+                  firestore.doc(path).get()
+                )
+              )
+            ).map(
+              (doc: firestore.DocumentSnapshot<firestore.DocumentData>) => ({
+                ...doc.data(),
+                id: doc.id,
+              })
+            )
+          : fieldValue?.id
+          ? {
+              ...(await firestore.doc(fieldValue?.path).get()).data(),
+              id: fieldValue?.id,
+            }
+          : typeof fieldValue === "string"
+          ? {
+              ...(
+                await (collectionPath
+                  ? firestore.collection(collectionPath)
+                  : firestore
+                )
+                  .doc(fieldValue)
+                  .get()
+              ).data(),
+              id: collectionPath
+                ? collectionPath?.split("/")?.pop?.()
+                : fieldValue,
+            }
+          : null;
+      }
+    }
+    return data;
   }
 
   /**

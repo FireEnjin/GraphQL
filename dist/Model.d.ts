@@ -168,7 +168,11 @@ export default class<T extends IEntity> {
      * Get a specific document's data or resolve query
      * @param id The id of the document
      */
-    find<I = T>(id?: string): Promise<I>;
+    find<I = T>(id?: string, relationships?: {
+        [fieldPath: string]: {
+            collectionPath?: string;
+        };
+    }): Promise<I>;
     /**
      * Get one document from a list of results
      */

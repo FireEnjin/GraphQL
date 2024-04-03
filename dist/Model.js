@@ -152,8 +152,42 @@ class default_1 {
      * Get a specific document's data or resolve query
      * @param id The id of the document
      */
-    async find(id) {
-        return (id ? this.repo().findById(id) : this.repo().find());
+    async find(id, relationships = {}) {
+        var _a, _b;
+        const data = (id ? this.repo().findById(id) : this.repo().find());
+        const queryMap = {};
+        const firestore = this.ref().firestore;
+        if (relationships) {
+            for (const [fieldPath, config] of Object.entries(relationships)) {
+                if (!config)
+                    continue;
+                const fieldValue = data[fieldPath];
+                const { collectionPath } = config;
+                data[fieldPath] = Array.isArray(data[fieldPath])
+                    ? (await Promise.all(data[fieldPath].map(({ id: foreignId, path }) => firestore.doc(path).get()))).map((doc) => ({
+                        ...doc.data(),
+                        id: doc.id,
+                    }))
+                    : (fieldValue === null || fieldValue === void 0 ? void 0 : fieldValue.id)
+                        ? {
+                            ...(await firestore.doc(fieldValue === null || fieldValue === void 0 ? void 0 : fieldValue.path).get()).data(),
+                            id: fieldValue === null || fieldValue === void 0 ? void 0 : fieldValue.id,
+                        }
+                        : typeof fieldValue === "string"
+                            ? {
+                                ...(await (collectionPath
+                                    ? firestore.collection(collectionPath)
+                                    : firestore)
+                                    .doc(fieldValue)
+                                    .get()).data(),
+                                id: collectionPath
+                                    ? (_b = (_a = collectionPath === null || collectionPath === void 0 ? void 0 : collectionPath.split("/")) === null || _a === void 0 ? void 0 : _a.pop) === null || _b === void 0 ? void 0 : _b.call(_a)
+                                    : fieldValue,
+                            }
+                            : null;
+            }
+        }
+        return data;
     }
     /**
      * Get one document from a list of results
