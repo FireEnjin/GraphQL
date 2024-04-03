@@ -276,10 +276,13 @@ export default class<T extends IEntity> {
     const queryMap = {};
     const firestore = this.ref().firestore;
     if (relationships) {
+      console.log(relationships);
       for (const [fieldPath, config] of Object.entries(relationships)) {
         if (!config) continue;
         const fieldValue = data[fieldPath];
         const { collectionPath } = config;
+        console.log(fieldValue, collectionPath);
+
         data[fieldPath] = Array.isArray(data[fieldPath])
           ? (
               await Promise.all(

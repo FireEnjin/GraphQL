@@ -154,15 +154,19 @@ class default_1 {
      */
     async find(id, relationships = {}) {
         var _a, _b;
-        const data = (id ? this.repo().findById(id) : this.repo().find());
+        const data = (await (id
+            ? this.repo().findById(id)
+            : this.repo().find()));
         const queryMap = {};
         const firestore = this.ref().firestore;
         if (relationships) {
+            console.log(relationships);
             for (const [fieldPath, config] of Object.entries(relationships)) {
                 if (!config)
                     continue;
                 const fieldValue = data[fieldPath];
                 const { collectionPath } = config;
+                console.log(fieldValue, collectionPath);
                 data[fieldPath] = Array.isArray(data[fieldPath])
                     ? (await Promise.all(data[fieldPath].map(({ id: foreignId, path }) => firestore.doc(path).get()))).map((doc) => ({
                         ...doc.data(),
