@@ -165,7 +165,7 @@ class default_1 {
                 const config = fieldMap[key];
                 console.log(key, config);
                 if (typeof callback === "function")
-                    contextData[key] = await callback(key, config);
+                    contextData[key] = await callback(key, contextData, config);
                 if (typeof config === "object" && ((_a = Object.keys(config)) === null || _a === void 0 ? void 0 : _a.length))
                     resolveLevel(config, contextData[key], callback);
             }
@@ -175,11 +175,11 @@ class default_1 {
                 (0, setByPath_1.default)(acc, path, config);
                 return acc;
             }, {});
-            await resolveLevel(queryMap, data, async (fieldPath, { collectionPath }) => {
+            await resolveLevel(queryMap, data, async (fieldPath, contextData, { collectionPath }) => {
                 var _a, _b;
-                const fieldValue = data[fieldPath];
-                data[fieldPath] = Array.isArray(data[fieldPath])
-                    ? (await Promise.all(data[fieldPath].map(({ id: foreignId, path }) => firestore.doc(path).get()))).map((doc) => ({
+                const fieldValue = contextData[fieldPath];
+                contextData[fieldPath] = Array.isArray(contextData[fieldPath])
+                    ? (await Promise.all(contextData[fieldPath].map(({ path }) => firestore.doc(path).get()))).map((doc) => ({
                         ...doc.data(),
                         id: doc.id,
                     }))
@@ -200,6 +200,7 @@ class default_1 {
                                     : fieldValue,
                             }
                             : null;
+                return contextData;
             });
         }
         return data;

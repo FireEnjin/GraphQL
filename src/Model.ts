@@ -278,14 +278,14 @@ export default class<T extends IEntity> {
     const resolveLevel = async (
       fieldMap: any,
       contextData: any,
-      callback: (key: string, values: any) => Promise<any>
+      callback: (key: string, contextData: any, config: any) => Promise<any>
     ) => {
       console.log(fieldMap, contextData);
       for (const key of Object.keys(fieldMap)) {
         const config = fieldMap[key];
         console.log(key, config);
         if (typeof callback === "function")
-          contextData[key] = await callback(key, config);
+          contextData[key] = await callback(key, contextData, config);
         if (typeof config === "object" && Object.keys(config)?.length)
           resolveLevel(config, contextData[key], callback);
       }
@@ -301,12 +301,12 @@ export default class<T extends IEntity> {
       await resolveLevel(
         queryMap,
         data,
-        async (fieldPath, { collectionPath }) => {
-          const fieldValue = data[fieldPath];
-          data[fieldPath] = Array.isArray(data[fieldPath])
+        async (fieldPath, contextData, { collectionPath }) => {
+          const fieldValue = contextData[fieldPath];
+          return Array.isArray(contextData[fieldPath])
             ? (
                 await Promise.all(
-                  data[fieldPath].map(({ id: foreignId, path }) =>
+                  contextData[fieldPath].map(({ path }) =>
                     firestore.doc(path).get()
                   )
                 )
