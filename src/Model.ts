@@ -303,7 +303,7 @@ export default class<T extends IEntity> {
         data,
         async (fieldPath, contextData, { collectionPath }) => {
           const fieldValue = contextData[fieldPath];
-          return Array.isArray(contextData[fieldPath])
+          const fieldData = Array.isArray(contextData[fieldPath])
             ? (
                 await Promise.all(
                   contextData[fieldPath].map(({ path }) =>
@@ -336,6 +336,8 @@ export default class<T extends IEntity> {
                   : fieldValue,
               }
             : null;
+          console.log(queryMap, data, fieldData);
+          return fieldData;
         }
       );
     }

@@ -178,7 +178,7 @@ class default_1 {
             await resolveLevel(queryMap, data, async (fieldPath, contextData, { collectionPath }) => {
                 var _a, _b;
                 const fieldValue = contextData[fieldPath];
-                contextData[fieldPath] = Array.isArray(contextData[fieldPath])
+                const fieldData = Array.isArray(contextData[fieldPath])
                     ? (await Promise.all(contextData[fieldPath].map(({ path }) => firestore.doc(path).get()))).map((doc) => ({
                         ...doc.data(),
                         id: doc.id,
@@ -200,7 +200,8 @@ class default_1 {
                                     : fieldValue,
                             }
                             : null;
-                return contextData;
+                console.log(queryMap, data, fieldData);
+                return fieldData;
             });
         }
         return data;
