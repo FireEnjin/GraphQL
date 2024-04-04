@@ -369,8 +369,8 @@ export default class<T extends IEntity> {
    * Get the FireORM repo reference for the collection
    * @see https://fireorm.js.org/#/classes/basefirestorerepository
    */
-  repo() {
-    return getRepository<T>(this.options.docSchema);
+  repo<R extends IEntity = T>(schema?: any) {
+    return getRepository<R>(schema || this.options.docSchema);
   }
 
   /**

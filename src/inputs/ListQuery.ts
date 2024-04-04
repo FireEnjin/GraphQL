@@ -3,7 +3,7 @@ import { Field, InputType } from "type-graphql";
 
 @InputType({ description: "The default input to use for all list queries" })
 export default class ListQueryInput {
-  @Field({
+  @Field(() => String!, {
     description: "The search query",
   })
   query?: string;
@@ -11,7 +11,7 @@ export default class ListQueryInput {
     description: "A list of tags to search for",
   })
   tags?: string[];
-  @Field({
+  @Field(() => Number, {
     description: "The number of results to return",
   })
   limit?: number;
@@ -19,7 +19,7 @@ export default class ListQueryInput {
     description: "Order the list of results by this field",
   })
   orderBy?: string;
-  @Field(() => String!, {
+  @Field(() => String, {
     description: "The directions to order the results",
   })
   orderDirection?: "asc" | "desc";
@@ -55,15 +55,15 @@ export default class ListQueryInput {
     description: "Where a column value is in an array of values",
   })
   whereIn?: any;
-  @Field({
+  @Field(() => String, {
     description: "The ID of the last result from the current page",
   })
   next?: string;
-  @Field({
+  @Field(() => String, {
     description: "The ID of the first result from the current",
   })
   back?: string;
-  @Field({
+  @Field(() => Number, {
     description: "The page of results to get",
   })
   page?: number;
