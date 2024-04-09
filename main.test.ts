@@ -22,11 +22,25 @@ test("Should test model", async () => {
   }
 
   const users = new UserModel();
-  const user = await users.find("test", {
-    createdBy: {},
+  const user: any = await users.find("test", {
+    createdBy: {
+      createdBy: {
+        users: {
+          createdBy: {
+            users: {
+              createdBy: {},
+            },
+          },
+        },
+      },
+    },
   });
 
   console.log(user);
+  console.log(user.createdBy);
+  for (const createdUser of user.createdBy.createdBy.users) {
+    console.log("deep users", createdUser?.createdBy?.users);
+  }
 
   expect(user).toBeTruthy();
 });
