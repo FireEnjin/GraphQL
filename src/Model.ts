@@ -272,14 +272,43 @@ export default class<T extends IEntity> {
   /**
    * Get a specific document's data or resolve query
    * @param id The id of the document
+   * @param reslationships The map for relationships to get with the query
    */
   async find<I = T>(id?: string, relationships: RelationshipQuery = {}) {
-    let queryCount = 0;
     const data = (await (id
       ? this.repo().findById(id)
       : this.repo().find())) as I;
     if (relationships) {
+      const rootDocPath = `${this.ref().path}/${id}`;
+      const queryCache: { [path: string]: any } = {
+        [rootDocPath]: { ...data, _path: rootDocPath },
+      };
       const firestore = this.ref().firestore;
+      const getPathFromDoc = (doc: any) =>
+        doc?.path ||
+        doc?.ref?.path ||
+        doc?._ref?._path?.segments?.join?.("/") ||
+        doc?._path?.segments?.join?.("/");
+      const getDoc = async (path: string) => {
+        if (!path) return;
+        const docData = { ...(queryCache?.[path] || {}) };
+        const id = docData?.id;
+        const query = queryCache?.[path]
+          ? new Promise((res) =>
+              res({
+                id,
+                data: () => docData,
+                ref: {
+                  id,
+                  path,
+                },
+              })
+            )
+          : firestore.doc(path).get();
+
+        return query as Promise<firestore.DocumentSnapshot<I>>;
+      };
+
       const resolveLevel = async (
         fieldMap: any,
         contextData: any,
@@ -301,14 +330,15 @@ export default class<T extends IEntity> {
             await resolveLevel(nextFieldMap, contextData[key], callback);
         }
       };
-      const cleanDocData = (
-        doc: firestore.DocumentSnapshot<firestore.DocumentData>
-      ) => {
-        queryCount++;
-        return {
+      const cleanDocData = (doc: firestore.DocumentSnapshot<I>) => {
+        const path = getPathFromDoc(doc);
+        const data = (queryCache[path] && { ...queryCache[path] }) || {
           id: doc?.id || null,
           ...cleanObjectOfReferences(doc.data(), true),
+          _path: path,
         };
+        if (!queryCache[path]) queryCache[path] = data;
+        return data;
       };
       await resolveLevel(
         relationships,
@@ -319,35 +349,27 @@ export default class<T extends IEntity> {
           { _: { collectionPath } = { collectionPath: null } }
         ) => {
           const fieldValue = contextData?.[fieldPath];
+          const valueIsArray = Array.isArray(fieldValue);
           if (!fieldValue) return {};
-          const fieldData = Array.isArray(fieldValue)
+          const fieldData = valueIsArray
             ? (
                 await Promise.all(
-                  fieldValue.map((doc) =>
-                    firestore
-                      .doc(doc?.path || doc?._path?.segments?.join?.("/"))
-                      .get()
-                  )
+                  fieldValue.map((doc) => getDoc(getPathFromDoc(doc)))
                 )
               ).map(cleanDocData)
             : fieldValue?.id
-            ? cleanDocData(await firestore.doc(fieldValue?.path).get())
+            ? cleanDocData(await getDoc(fieldValue?._path || fieldValue?.path))
             : typeof fieldValue === "string" && collectionPath
             ? cleanDocData(
-                await (collectionPath
-                  ? firestore.collection(collectionPath)
-                  : firestore
+                await getDoc(
+                  `${collectionPath ? `${collectionPath}/` : ""}${fieldValue}`
                 )
-                  .doc(fieldValue)
-                  .get()
               )
             : null;
           return fieldData;
         }
       );
     }
-
-    console.log("Queries ran: ", queryCount);
 
     return data;
   }

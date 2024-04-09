@@ -14,7 +14,7 @@ const type_graphql_1 = require("type-graphql");
 let ListQueryInput = class ListQueryInput {
 };
 __decorate([
-    (0, type_graphql_1.Field)({
+    (0, type_graphql_1.Field)(() => String, {
         description: "The search query",
     }),
     __metadata("design:type", String)
@@ -26,7 +26,7 @@ __decorate([
     __metadata("design:type", Array)
 ], ListQueryInput.prototype, "tags", void 0);
 __decorate([
-    (0, type_graphql_1.Field)({
+    (0, type_graphql_1.Field)(() => Number, {
         description: "The number of results to return",
     }),
     __metadata("design:type", Number)
@@ -92,19 +92,19 @@ __decorate([
     __metadata("design:type", Object)
 ], ListQueryInput.prototype, "whereIn", void 0);
 __decorate([
-    (0, type_graphql_1.Field)({
+    (0, type_graphql_1.Field)(() => String, {
         description: "The ID of the last result from the current page",
     }),
     __metadata("design:type", String)
 ], ListQueryInput.prototype, "next", void 0);
 __decorate([
-    (0, type_graphql_1.Field)({
+    (0, type_graphql_1.Field)(() => String, {
         description: "The ID of the first result from the current",
     }),
     __metadata("design:type", String)
 ], ListQueryInput.prototype, "back", void 0);
 __decorate([
-    (0, type_graphql_1.Field)({
+    (0, type_graphql_1.Field)(() => Number, {
         description: "The page of results to get",
     }),
     __metadata("design:type", Number)

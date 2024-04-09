@@ -2,6 +2,13 @@ import { IFireOrmQueryLine, IFirestoreVal, IOrderByParams, IEntity, IWherePropPa
 import { firestore } from "firebase-admin";
 import { FirestoreBatch } from "fireorm/lib/src/Batch/FirestoreBatch";
 import { FirestoreBatchSingleRepository } from "fireorm/lib/src/Batch/FirestoreBatchSingleRepository";
+export interface RelationshipQuery {
+    [fieldPath: string]: (RelationshipQuery & {
+        _?: {
+            collectionPath?: string;
+        };
+    }) | boolean;
+}
 export default class<T extends IEntity> {
     protected options: {
         docSchema: any;
@@ -167,12 +174,9 @@ export default class<T extends IEntity> {
     /**
      * Get a specific document's data or resolve query
      * @param id The id of the document
+     * @param reslationships The map for relationships to get with the query
      */
-    find<I = T>(id?: string, relationships?: {
-        [fieldPath: string]: {
-            collectionPath?: string;
-        };
-    }): Promise<I>;
+    find<I = T>(id?: string, relationships?: RelationshipQuery): Promise<I>;
     /**
      * Get one document from a list of results
      */
@@ -189,7 +193,7 @@ export default class<T extends IEntity> {
      * Get the FireORM repo reference for the collection
      * @see https://fireorm.js.org/#/classes/basefirestorerepository
      */
-    repo(): import("fireorm").BaseFirestoreRepository<T>;
+    repo<R extends IEntity = T>(schema?: any): import("fireorm").BaseFirestoreRepository<R>;
     /**
      * Run a transaction on the collection
      * @param executor The transaction executor function

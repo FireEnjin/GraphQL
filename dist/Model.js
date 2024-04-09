@@ -8,7 +8,7 @@ const pluralize_1 = __importDefault(require("pluralize"));
 const date_fns_1 = require("date-fns");
 const capFirstLetter_1 = __importDefault(require("./helpers/capFirstLetter"));
 const createResolver_1 = __importDefault(require("./helpers/createResolver"));
-const setByPath_1 = __importDefault(require("./helpers/setByPath"));
+const cleanObjectOfReferences_1 = __importDefault(require("./helpers/cleanObjectOfReferences"));
 class default_1 {
     constructor(options) {
         this.options = options;
@@ -152,55 +152,81 @@ class default_1 {
     /**
      * Get a specific document's data or resolve query
      * @param id The id of the document
+     * @param reslationships The map for relationships to get with the query
      */
     async find(id, relationships = {}) {
         const data = (await (id
             ? this.repo().findById(id)
             : this.repo().find()));
-        const firestore = this.ref().firestore;
-        const resolveLevel = async (fieldMap, contextData, callback) => {
-            var _a;
-            console.log(fieldMap, contextData);
-            for (const key of Object.keys(fieldMap)) {
-                const config = fieldMap[key];
-                console.log(key, config);
-                if (typeof callback === "function")
-                    contextData[key] = await callback(key, contextData, config);
-                if (typeof config === "object" && ((_a = Object.keys(config)) === null || _a === void 0 ? void 0 : _a.length))
-                    resolveLevel(config, contextData[key], callback);
-            }
-        };
         if (relationships) {
-            const queryMap = Object.entries(relationships).reduce((acc, [path, config]) => {
-                (0, setByPath_1.default)(acc, path, config);
-                return acc;
-            }, {});
-            await resolveLevel(queryMap, data, async (fieldPath, contextData, { collectionPath }) => {
-                var _a, _b;
-                const fieldValue = contextData[fieldPath];
-                const fieldData = Array.isArray(contextData[fieldPath])
-                    ? (await Promise.all(contextData[fieldPath].map(({ path }) => firestore.doc(path).get()))).map((doc) => ({
-                        ...doc.data(),
-                        id: doc.id,
+            const rootDocPath = `${this.ref().path}/${id}`;
+            const queryCache = {
+                [rootDocPath]: { ...data, _path: rootDocPath },
+            };
+            const firestore = this.ref().firestore;
+            const getPathFromDoc = (doc) => {
+                var _a, _b, _c, _d, _e, _f, _g, _h;
+                return (doc === null || doc === void 0 ? void 0 : doc.path) ||
+                    ((_a = doc === null || doc === void 0 ? void 0 : doc.ref) === null || _a === void 0 ? void 0 : _a.path) ||
+                    ((_e = (_d = (_c = (_b = doc === null || doc === void 0 ? void 0 : doc._ref) === null || _b === void 0 ? void 0 : _b._path) === null || _c === void 0 ? void 0 : _c.segments) === null || _d === void 0 ? void 0 : _d.join) === null || _e === void 0 ? void 0 : _e.call(_d, "/")) ||
+                    ((_h = (_g = (_f = doc === null || doc === void 0 ? void 0 : doc._path) === null || _f === void 0 ? void 0 : _f.segments) === null || _g === void 0 ? void 0 : _g.join) === null || _h === void 0 ? void 0 : _h.call(_g, "/"));
+            };
+            const getDoc = async (path) => {
+                if (!path)
+                    return;
+                const docData = { ...((queryCache === null || queryCache === void 0 ? void 0 : queryCache[path]) || {}) };
+                const id = docData === null || docData === void 0 ? void 0 : docData.id;
+                const query = (queryCache === null || queryCache === void 0 ? void 0 : queryCache[path])
+                    ? new Promise((res) => res({
+                        id,
+                        data: () => docData,
+                        ref: {
+                            id,
+                            path,
+                        },
                     }))
+                    : firestore.doc(path).get();
+                return query;
+            };
+            const resolveLevel = async (fieldMap, contextData, callback) => {
+                for (const key of Object.keys(fieldMap)) {
+                    const nextFieldMap = fieldMap === null || fieldMap === void 0 ? void 0 : fieldMap[key];
+                    if (!nextFieldMap)
+                        continue;
+                    if (Array.isArray(contextData) && typeof nextFieldMap === "object") {
+                        await Promise.all(contextData.map((d) => resolveLevel(fieldMap, d, callback)));
+                        continue;
+                    }
+                    if (typeof callback === "function") {
+                        contextData[key] = await callback(key, contextData, nextFieldMap);
+                    }
+                    if (typeof nextFieldMap === "object")
+                        await resolveLevel(nextFieldMap, contextData[key], callback);
+                }
+            };
+            const cleanDocData = (doc) => {
+                const path = getPathFromDoc(doc);
+                const data = (queryCache[path] && { ...queryCache[path] }) || {
+                    id: (doc === null || doc === void 0 ? void 0 : doc.id) || null,
+                    ...(0, cleanObjectOfReferences_1.default)(doc.data(), true),
+                    _path: path,
+                };
+                if (!queryCache[path])
+                    queryCache[path] = data;
+                return data;
+            };
+            await resolveLevel(relationships, data, async (fieldPath, contextData, { _: { collectionPath } = { collectionPath: null } }) => {
+                const fieldValue = contextData === null || contextData === void 0 ? void 0 : contextData[fieldPath];
+                const valueIsArray = Array.isArray(fieldValue);
+                if (!fieldValue)
+                    return {};
+                const fieldData = valueIsArray
+                    ? (await Promise.all(fieldValue.map((doc) => getDoc(getPathFromDoc(doc))))).map(cleanDocData)
                     : (fieldValue === null || fieldValue === void 0 ? void 0 : fieldValue.id)
-                        ? {
-                            ...(await firestore.doc(fieldValue === null || fieldValue === void 0 ? void 0 : fieldValue.path).get()).data(),
-                            id: fieldValue === null || fieldValue === void 0 ? void 0 : fieldValue.id,
-                        }
-                        : typeof fieldValue === "string"
-                            ? {
-                                ...(await (collectionPath
-                                    ? firestore.collection(collectionPath)
-                                    : firestore)
-                                    .doc(fieldValue)
-                                    .get()).data(),
-                                id: collectionPath
-                                    ? (_b = (_a = collectionPath === null || collectionPath === void 0 ? void 0 : collectionPath.split("/")) === null || _a === void 0 ? void 0 : _a.pop) === null || _b === void 0 ? void 0 : _b.call(_a)
-                                    : fieldValue,
-                            }
+                        ? cleanDocData(await getDoc((fieldValue === null || fieldValue === void 0 ? void 0 : fieldValue._path) || (fieldValue === null || fieldValue === void 0 ? void 0 : fieldValue.path)))
+                        : typeof fieldValue === "string" && collectionPath
+                            ? cleanDocData(await getDoc(`${collectionPath ? `${collectionPath}/` : ""}${fieldValue}`))
                             : null;
-                console.log(queryMap, data, fieldData);
                 return fieldData;
             });
         }
@@ -228,8 +254,8 @@ class default_1 {
      * Get the FireORM repo reference for the collection
      * @see https://fireorm.js.org/#/classes/basefirestorerepository
      */
-    repo() {
-        return (0, fireorm_1.getRepository)(this.options.docSchema);
+    repo(schema) {
+        return (0, fireorm_1.getRepository)(schema || this.options.docSchema);
     }
     /**
      * Run a transaction on the collection

@@ -37,8 +37,8 @@ test("Should test model", async () => {
   });
 
   console.log(user);
-  console.log(user.createdBy);
-  for (const createdUser of user.createdBy.createdBy.users) {
+  console.log(user.createdBy.createdBy);
+  for (const createdUser of user?.createdBy?.createdBy?.users || []) {
     console.log("deep users", createdUser?.createdBy?.users);
   }
 
