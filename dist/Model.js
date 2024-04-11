@@ -36,7 +36,7 @@ class default_1 {
      * Paginate a collection to page results
      */
     async paginate(options = {}, onPaginate, hookOptions) {
-        var _a;
+        var _a, _b, _c;
         let query = this.ref();
         const operatorMap = {
             whereEqual: "==",
@@ -99,10 +99,10 @@ class default_1 {
         const res = await query.get();
         for (const doc of res.docs) {
             const entity = { ...doc.data(), id: doc.id };
-            if (entity.createdAt && this.timestamps) {
+            if (((_b = entity === null || entity === void 0 ? void 0 : entity.createdAt) === null || _b === void 0 ? void 0 : _b.toDate) && this.timestamps) {
                 entity.createdAt = entity.createdAt.toDate().toISOString();
             }
-            if (entity.updatedAt && this.timestamps) {
+            if (((_c = entity === null || entity === void 0 ? void 0 : entity.updatedAt) === null || _c === void 0 ? void 0 : _c.toDate) && this.timestamps) {
                 entity.updatedAt = entity.updatedAt.toDate().toISOString();
             }
             output.push(entity);
@@ -115,7 +115,7 @@ class default_1 {
      */
     create(modelObject) {
         return this.repo().create(this.timestamps
-            ? { createdAt: new Date(), ...modelObject }
+            ? { ...modelObject, createdAt: new Date() }
             : modelObject);
     }
     /**

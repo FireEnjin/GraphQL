@@ -206,10 +206,10 @@ export default class<T extends IEntity> {
     const res = await query.get();
     for (const doc of res.docs) {
       const entity = { ...doc.data(), id: doc.id };
-      if (entity.createdAt && this.timestamps) {
+      if (entity?.createdAt?.toDate && this.timestamps) {
         entity.createdAt = (entity.createdAt.toDate() as Date).toISOString();
       }
-      if (entity.updatedAt && this.timestamps) {
+      if (entity?.updatedAt?.toDate && this.timestamps) {
         entity.updatedAt = (entity.updatedAt.toDate() as Date).toISOString();
       }
       output.push(entity);
@@ -225,7 +225,7 @@ export default class<T extends IEntity> {
   create(modelObject: Partial<T>) {
     return this.repo().create(
       this.timestamps
-        ? { createdAt: new Date(), ...modelObject }
+        ? { ...modelObject, createdAt: new Date() }
         : (modelObject as any)
     );
   }
