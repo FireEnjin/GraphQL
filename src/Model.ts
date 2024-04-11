@@ -350,7 +350,7 @@ export default class<T extends IEntity> {
         ) => {
           const fieldValue = contextData?.[fieldPath];
           const valueIsArray = Array.isArray(fieldValue);
-          if (!fieldValue) return {};
+          if (!fieldValue) return null;
           const fieldData = valueIsArray
             ? (
                 await Promise.all(
