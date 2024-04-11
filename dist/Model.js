@@ -219,7 +219,7 @@ class default_1 {
                 const fieldValue = contextData === null || contextData === void 0 ? void 0 : contextData[fieldPath];
                 const valueIsArray = Array.isArray(fieldValue);
                 if (!fieldValue)
-                    return {};
+                    return null;
                 const fieldData = valueIsArray
                     ? (await Promise.all(fieldValue.map((doc) => getDoc(getPathFromDoc(doc))))).map(cleanDocData)
                     : (fieldValue === null || fieldValue === void 0 ? void 0 : fieldValue.id)
