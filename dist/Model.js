@@ -32,8 +32,8 @@ class default_1 {
             });
         }
     }
-    buildQuery(options = {}, ref) {
-        var _a;
+    buildQuery(options = {}, ref, relation) {
+        var _a, _b;
         let query = ref || this.ref();
         const operatorMap = {
             whereEqual: "==",
@@ -52,7 +52,7 @@ class default_1 {
                 query = query.orderBy(orderBy, direction ? direction : "asc");
             }
         }
-        else if (this.timestamps && !this.order) {
+        else if (this.timestamps && !this.order && !relation) {
             query = query.orderBy("createdAt", "desc");
         }
         for (const where of [
@@ -71,13 +71,16 @@ class default_1 {
                         ? JSON.parse(options[where])
                         : options[where];
                 for (const whereKey of Object.keys(options[where])) {
-                    query = query.where(whereKey, operatorMap[where], (0, date_fns_1.isValid)((0, date_fns_1.parseISO)(options[where][whereKey]))
-                        ? new Date(Date.parse(options[where][whereKey]))
-                        : options[where][whereKey]);
+                    let value = options[where][whereKey];
+                    if ((_a = value === null || value === void 0 ? void 0 : value.startsWith) === null || _a === void 0 ? void 0 : _a.call(value, "~/")) {
+                        value = this.ref().firestore.doc(value.replace("~/", ""));
+                        console.log("doc ref", value);
+                    }
+                    query = query.where(whereKey, operatorMap[where], (0, date_fns_1.isValid)((0, date_fns_1.parseISO)(value)) ? new Date(Date.parse(value)) : value);
                 }
             }
         }
-        if (options.limit && !((_a = options === null || options === void 0 ? void 0 : options.query) === null || _a === void 0 ? void 0 : _a.length)) {
+        if (options.limit && !((_b = options === null || options === void 0 ? void 0 : options.query) === null || _b === void 0 ? void 0 : _b.length)) {
             query = query.limit(+options.limit);
         }
         return query;
@@ -195,13 +198,13 @@ class default_1 {
                 return query;
             };
             const listDocs = async (collectionPath, options) => {
-                const query = this.buildQuery(options, firestore.collection(collectionPath));
+                const query = this.buildQuery(options, firestore.collection(collectionPath), true);
                 const { docs } = await query.get();
                 const documents = await Promise.all(docs.map((doc) => getDoc(getPathFromDoc(doc))));
                 return documents.map(cleanDocData);
             };
             const resolveLevel = async (fieldMap, contextData, callback) => {
-                for (const key of Object.keys(fieldMap)) {
+                for (const key of Object.keys(fieldMap).filter((k) => k !== "_")) {
                     const nextFieldMap = fieldMap === null || fieldMap === void 0 ? void 0 : fieldMap[key];
                     if (!nextFieldMap)
                         continue;
@@ -210,7 +213,6 @@ class default_1 {
                         continue;
                     }
                     if (typeof callback === "function") {
-                        console.log(contextData, key);
                         contextData[key] = await callback(key, contextData, nextFieldMap);
                     }
                     if (typeof nextFieldMap === "object")
@@ -233,7 +235,6 @@ class default_1 {
                 const valueIsArray = Array.isArray(fieldValue);
                 if (!fieldValue && !(relation === null || relation === void 0 ? void 0 : relation.collectionPath))
                     return null;
-                console.log(fieldPath, fieldValue, relation);
                 const fieldData = valueIsArray
                     ? (await Promise.all(fieldValue.map((doc) => getDoc(getPathFromDoc(doc))))).map(cleanDocData)
                     : (fieldValue === null || fieldValue === void 0 ? void 0 : fieldValue.id)

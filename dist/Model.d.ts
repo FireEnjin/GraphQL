@@ -3,6 +3,7 @@ import { firestore } from "firebase-admin";
 import { FirestoreBatch } from "fireorm/lib/src/Batch/FirestoreBatch";
 import { FirestoreBatchSingleRepository } from "fireorm/lib/src/Batch/FirestoreBatchSingleRepository";
 export interface QueryOptions {
+    findOne?: boolean;
     collectionPath?: string;
     query?: string;
     orderBy?: string;

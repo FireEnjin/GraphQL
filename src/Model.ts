@@ -148,16 +148,14 @@ export default class<T extends IEntity> {
             : options[where];
         for (const whereKey of Object.keys(options[where])) {
           let value = options[where][whereKey];
-          if (value?.startsWith("~/"))
+          if (value?.startsWith?.("~/")) {
             value = this.ref().firestore.doc(value.replace("~/", ""));
+            console.log("doc ref", value);
+          }
           query = query.where(
             whereKey,
             operatorMap[where],
-            value?.id
-              ? value
-              : isValid(parseISO(value))
-              ? new Date(Date.parse(value))
-              : value
+            isValid(parseISO(value)) ? new Date(Date.parse(value)) : value
           );
         }
       }
