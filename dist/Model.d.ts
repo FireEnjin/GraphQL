@@ -2,11 +2,41 @@ import { IFireOrmQueryLine, IFirestoreVal, IOrderByParams, IEntity, IWherePropPa
 import { firestore } from "firebase-admin";
 import { FirestoreBatch } from "fireorm/lib/src/Batch/FirestoreBatch";
 import { FirestoreBatchSingleRepository } from "fireorm/lib/src/Batch/FirestoreBatchSingleRepository";
+export interface QueryOptions {
+    collectionPath?: string;
+    query?: string;
+    orderBy?: string;
+    limit?: number;
+    next?: string;
+    back?: string;
+    whereEqual?: {
+        [key: string]: any;
+    };
+    whereLessThan?: {
+        [key: string]: any;
+    };
+    whereLessThanOrEqual?: {
+        [key: string]: any;
+    };
+    whereGreaterThan?: {
+        [key: string]: any;
+    };
+    whereGreaterThanOrEqual?: {
+        [key: string]: any;
+    };
+    whereArrayContains?: {
+        [key: string]: any;
+    };
+    whereArrayContainsAny?: {
+        [key: string]: any;
+    };
+    whereIn?: {
+        [key: string]: any;
+    };
+}
 export interface RelationshipQuery {
     [fieldPath: string]: (RelationshipQuery & {
-        _?: {
-            collectionPath?: string;
-        };
+        _?: QueryOptions;
     }) | boolean;
 }
 export default class<T extends IEntity> {
@@ -75,69 +105,11 @@ export default class<T extends IEntity> {
         };
         disableResolvers?: boolean;
     });
+    private buildQuery;
     /**
      * Paginate a collection to page results
      */
-    paginate(options?: {
-        query?: string;
-        orderBy?: string;
-        limit?: number;
-        next?: string;
-        back?: string;
-        whereEqual?: {
-            [key: string]: any;
-        };
-        whereLessThan?: {
-            [key: string]: any;
-        };
-        whereLessThanOrEqual?: {
-            [key: string]: any;
-        };
-        whereGreaterThan?: {
-            [key: string]: any;
-        };
-        whereGreaterThanOrEqual?: {
-            [key: string]: any;
-        };
-        whereArrayContains?: {
-            [key: string]: any;
-        };
-        whereArrayContainsAny?: {
-            [key: string]: any;
-        };
-        whereIn?: {
-            [key: string]: any;
-        };
-    }, onPaginate?: (query: any, queryOptions: {
-        orderBy?: string;
-        limit?: number;
-        next?: string;
-        back?: string;
-        whereEqual?: {
-            [key: string]: any;
-        };
-        whereLessThan?: {
-            [key: string]: any;
-        };
-        whereLessThanOrEqual?: {
-            [key: string]: any;
-        };
-        whereGreaterThan?: {
-            [key: string]: any;
-        };
-        whereGreaterThanOrEqual?: {
-            [key: string]: any;
-        };
-        whereArrayContains?: {
-            [key: string]: any;
-        };
-        whereArrayContainsAny?: {
-            [key: string]: any;
-        };
-        whereIn?: {
-            [key: string]: any;
-        };
-    }, hookOptions?: {
+    paginate(options?: QueryOptions, onPaginate?: (query: any, queryOptions: QueryOptions, hookOptions?: {
         context: any;
         type: string;
     }) => any, hookOptions?: {
@@ -176,7 +148,12 @@ export default class<T extends IEntity> {
      * @param id The id of the document
      * @param reslationships The map for relationships to get with the query
      */
-    find<I = T>(id?: string, relationships?: RelationshipQuery): Promise<I>;
+    find<I = T>(id?: string, relationships?: {
+        [key: string]: {
+            _?: QueryOptions;
+            [subkey: string]: any;
+        } | boolean;
+    }): Promise<I>;
     /**
      * Get one document from a list of results
      */

@@ -32,12 +32,9 @@ class default_1 {
             });
         }
     }
-    /**
-     * Paginate a collection to page results
-     */
-    async paginate(options = {}, onPaginate, hookOptions) {
-        var _a, _b, _c;
-        let query = this.ref();
+    buildQuery(options = {}, ref) {
+        var _a;
+        let query = ref || this.ref();
         const operatorMap = {
             whereEqual: "==",
             whereLessThan: "<",
@@ -80,6 +77,19 @@ class default_1 {
                 }
             }
         }
+        if (options.limit && !((_a = options === null || options === void 0 ? void 0 : options.query) === null || _a === void 0 ? void 0 : _a.length)) {
+            query = query.limit(+options.limit);
+        }
+        return query;
+    }
+    /**
+     * Paginate a collection to page results
+     */
+    async paginate(options = {}, onPaginate, hookOptions) {
+        var _a, _b;
+        const output = [];
+        const orderBy = (options === null || options === void 0 ? void 0 : options.orderBy) || this.order;
+        let query = this.buildQuery(options);
         if (onPaginate && typeof onPaginate === "function") {
             query = await onPaginate(query, options, hookOptions);
         }
@@ -92,17 +102,13 @@ class default_1 {
                 query = query[options.next ? "startAfter" : "endBefore"](orderBy ? docData[orderBy.split(":")[0]] : docData.createdAt);
             }
         }
-        if (options.limit && !((_a = options === null || options === void 0 ? void 0 : options.query) === null || _a === void 0 ? void 0 : _a.length)) {
-            query = query.limit(+options.limit);
-        }
-        const output = [];
         const res = await query.get();
         for (const doc of res.docs) {
             const entity = { ...doc.data(), id: doc.id };
-            if (((_b = entity === null || entity === void 0 ? void 0 : entity.createdAt) === null || _b === void 0 ? void 0 : _b.toDate) && this.timestamps) {
+            if (((_a = entity === null || entity === void 0 ? void 0 : entity.createdAt) === null || _a === void 0 ? void 0 : _a.toDate) && this.timestamps) {
                 entity.createdAt = entity.createdAt.toDate().toISOString();
             }
-            if (((_c = entity === null || entity === void 0 ? void 0 : entity.updatedAt) === null || _c === void 0 ? void 0 : _c.toDate) && this.timestamps) {
+            if (((_b = entity === null || entity === void 0 ? void 0 : entity.updatedAt) === null || _b === void 0 ? void 0 : _b.toDate) && this.timestamps) {
                 entity.updatedAt = entity.updatedAt.toDate().toISOString();
             }
             output.push(entity);
@@ -188,6 +194,12 @@ class default_1 {
                     : firestore.doc(path).get();
                 return query;
             };
+            const listDocs = async (collectionPath, options) => {
+                const query = this.buildQuery(options, firestore.collection(collectionPath));
+                const { docs } = await query.get();
+                const documents = await Promise.all(docs.map((doc) => getDoc(getPathFromDoc(doc))));
+                return documents.map(cleanDocData);
+            };
             const resolveLevel = async (fieldMap, contextData, callback) => {
                 for (const key of Object.keys(fieldMap)) {
                     const nextFieldMap = fieldMap === null || fieldMap === void 0 ? void 0 : fieldMap[key];
@@ -198,6 +210,7 @@ class default_1 {
                         continue;
                     }
                     if (typeof callback === "function") {
+                        console.log(contextData, key);
                         contextData[key] = await callback(key, contextData, nextFieldMap);
                     }
                     if (typeof nextFieldMap === "object")
@@ -215,18 +228,23 @@ class default_1 {
                     queryCache[path] = data;
                 return data;
             };
-            await resolveLevel(relationships, data, async (fieldPath, contextData, { _: { collectionPath } = { collectionPath: null } }) => {
+            await resolveLevel(relationships, data, async (fieldPath, contextData, { _: relation }) => {
                 const fieldValue = contextData === null || contextData === void 0 ? void 0 : contextData[fieldPath];
                 const valueIsArray = Array.isArray(fieldValue);
-                if (!fieldValue)
+                if (!fieldValue && !(relation === null || relation === void 0 ? void 0 : relation.collectionPath))
                     return null;
+                console.log(fieldPath, fieldValue, relation);
                 const fieldData = valueIsArray
                     ? (await Promise.all(fieldValue.map((doc) => getDoc(getPathFromDoc(doc))))).map(cleanDocData)
                     : (fieldValue === null || fieldValue === void 0 ? void 0 : fieldValue.id)
                         ? cleanDocData(await getDoc((fieldValue === null || fieldValue === void 0 ? void 0 : fieldValue._path) || (fieldValue === null || fieldValue === void 0 ? void 0 : fieldValue.path)))
-                        : typeof fieldValue === "string" && collectionPath
-                            ? cleanDocData(await getDoc(`${collectionPath ? `${collectionPath}/` : ""}${fieldValue}`))
-                            : null;
+                        : typeof fieldValue === "string" && (relation === null || relation === void 0 ? void 0 : relation.collectionPath)
+                            ? cleanDocData(await getDoc(`${(relation === null || relation === void 0 ? void 0 : relation.collectionPath)
+                                ? `${relation.collectionPath}/`
+                                : ""}${fieldValue}`))
+                            : !fieldValue && (relation === null || relation === void 0 ? void 0 : relation.collectionPath)
+                                ? await listDocs(relation === null || relation === void 0 ? void 0 : relation.collectionPath, relation)
+                                : null;
                 return fieldData;
             });
         }

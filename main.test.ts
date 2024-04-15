@@ -22,25 +22,20 @@ test("Should test model", async () => {
   }
 
   const users = new UserModel();
-  const user: any = await users.find("test", {
-    createdBy: {
-      createdBy: {
-        users: {
-          createdBy: {
-            users: {
-              createdBy: {},
-            },
-          },
+  const user: any = await users.find("ImJf9C8QDhQJnOyV5HET", {
+    friend: {
+      _: {
+        collectionPath: "users",
+        whereEqual: {
+          updatedBy: "~/users/iA7NkGkMV6PKVYaD67S8C1TlXoo1",
         },
+        findOne: true,
       },
+      users: {},
     },
   });
 
   console.log(user);
-  console.log(user.createdBy.createdBy);
-  for (const createdUser of user?.createdBy?.createdBy?.users || []) {
-    console.log("deep users", createdUser?.createdBy?.users);
-  }
 
   expect(user).toBeTruthy();
 });

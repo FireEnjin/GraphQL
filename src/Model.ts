@@ -17,12 +17,28 @@ import { FirestoreBatch } from "fireorm/lib/src/Batch/FirestoreBatch";
 import { FirestoreBatchSingleRepository } from "fireorm/lib/src/Batch/FirestoreBatchSingleRepository";
 import cleanObjectOfReferences from "./helpers/cleanObjectOfReferences";
 
+export interface QueryOptions {
+  findOne?: boolean;
+  collectionPath?: string;
+  query?: string;
+  orderBy?: string;
+  limit?: number;
+  next?: string;
+  back?: string;
+  whereEqual?: { [key: string]: any };
+  whereLessThan?: { [key: string]: any };
+  whereLessThanOrEqual?: { [key: string]: any };
+  whereGreaterThan?: { [key: string]: any };
+  whereGreaterThanOrEqual?: { [key: string]: any };
+  whereArrayContains?: { [key: string]: any };
+  whereArrayContainsAny?: { [key: string]: any };
+  whereIn?: { [key: string]: any };
+}
+
 export interface RelationshipQuery {
   [fieldPath: string]:
     | (RelationshipQuery & {
-        _?: {
-          collectionPath?: string;
-        };
+        _?: QueryOptions;
       })
     | boolean;
 }
@@ -89,52 +105,12 @@ export default class<T extends IEntity> {
     }
   }
 
-  /**
-   * Paginate a collection to page results
-   */
-  async paginate(
-    options: {
-      query?: string;
-      orderBy?: string;
-      limit?: number;
-      next?: string;
-      back?: string;
-      whereEqual?: { [key: string]: any };
-      whereLessThan?: { [key: string]: any };
-      whereLessThanOrEqual?: { [key: string]: any };
-      whereGreaterThan?: { [key: string]: any };
-      whereGreaterThanOrEqual?: { [key: string]: any };
-      whereArrayContains?: { [key: string]: any };
-      whereArrayContainsAny?: { [key: string]: any };
-      whereIn?: { [key: string]: any };
-    } = {},
-    onPaginate?: (
-      query,
-      queryOptions: {
-        orderBy?: string;
-        limit?: number;
-        next?: string;
-        back?: string;
-        whereEqual?: { [key: string]: any };
-        whereLessThan?: { [key: string]: any };
-        whereLessThanOrEqual?: { [key: string]: any };
-        whereGreaterThan?: { [key: string]: any };
-        whereGreaterThanOrEqual?: { [key: string]: any };
-        whereArrayContains?: { [key: string]: any };
-        whereArrayContainsAny?: { [key: string]: any };
-        whereIn?: { [key: string]: any };
-      },
-      hookOptions?: {
-        context: any;
-        type: string;
-      }
-    ) => any,
-    hookOptions?: {
-      context: any;
-      type: string;
-    }
-  ): Promise<T[]> {
-    let query = this.ref() as any;
+  private buildQuery(
+    options: QueryOptions = {},
+    ref?: any,
+    relation?: boolean
+  ) {
+    let query = ref || (this.ref() as any);
     const operatorMap = {
       whereEqual: "==",
       whereLessThan: "<",
@@ -151,7 +127,7 @@ export default class<T extends IEntity> {
         const [orderBy, direction] = order.split(":");
         query = query.orderBy(orderBy, direction ? direction : "asc");
       }
-    } else if (this.timestamps && !this.order) {
+    } else if (this.timestamps && !this.order && !relation) {
       query = query.orderBy("createdAt", "desc");
     }
 
@@ -171,17 +147,49 @@ export default class<T extends IEntity> {
             ? JSON.parse(options[where])
             : options[where];
         for (const whereKey of Object.keys(options[where])) {
+          let value = options[where][whereKey];
+          if (value?.startsWith("~/"))
+            value = this.ref().firestore.doc(value.replace("~/", ""));
           query = query.where(
             whereKey,
             operatorMap[where],
-            isValid(parseISO(options[where][whereKey]))
-              ? new Date(Date.parse(options[where][whereKey]))
-              : options[where][whereKey]
+            value?.id
+              ? value
+              : isValid(parseISO(value))
+              ? new Date(Date.parse(value))
+              : value
           );
         }
       }
     }
 
+    if (options.limit && !options?.query?.length) {
+      query = query.limit(+options.limit);
+    }
+    return query;
+  }
+
+  /**
+   * Paginate a collection to page results
+   */
+  async paginate(
+    options: QueryOptions = {},
+    onPaginate?: (
+      query,
+      queryOptions: QueryOptions,
+      hookOptions?: {
+        context: any;
+        type: string;
+      }
+    ) => any,
+    hookOptions?: {
+      context: any;
+      type: string;
+    }
+  ): Promise<T[]> {
+    const output = [];
+    const orderBy = options?.orderBy || this.order;
+    let query = this.buildQuery(options);
     if (onPaginate && typeof onPaginate === "function") {
       query = await onPaginate(query, options, hookOptions);
     }
@@ -197,12 +205,6 @@ export default class<T extends IEntity> {
         );
       }
     }
-
-    if (options.limit && !options?.query?.length) {
-      query = query.limit(+options.limit);
-    }
-
-    const output = [];
     const res = await query.get();
     for (const doc of res.docs) {
       const entity = { ...doc.data(), id: doc.id };
@@ -274,7 +276,12 @@ export default class<T extends IEntity> {
    * @param id The id of the document
    * @param reslationships The map for relationships to get with the query
    */
-  async find<I = T>(id?: string, relationships: RelationshipQuery = {}) {
+  async find<I = T>(
+    id?: string,
+    relationships: {
+      [key: string]: { _?: QueryOptions; [subkey: string]: any } | boolean;
+    } = {}
+  ) {
     const data = (await (id
       ? this.repo().findById(id)
       : this.repo().find())) as I;
@@ -309,12 +316,28 @@ export default class<T extends IEntity> {
         return query as Promise<firestore.DocumentSnapshot<I>>;
       };
 
+      const listDocs = async (
+        collectionPath: string,
+        options: QueryOptions
+      ) => {
+        const query = this.buildQuery(
+          options,
+          firestore.collection(collectionPath),
+          true
+        );
+        const { docs } = await query.get();
+        const documents = await Promise.all(
+          docs.map((doc) => getDoc(getPathFromDoc(doc)))
+        );
+        return documents.map(cleanDocData) as firestore.DocumentSnapshot<I>[];
+      };
+
       const resolveLevel = async (
         fieldMap: any,
         contextData: any,
         callback: (key: string, contextData: any, fieldMap: any) => Promise<any>
       ) => {
-        for (const key of Object.keys(fieldMap)) {
+        for (const key of Object.keys(fieldMap).filter((k) => k !== "_")) {
           const nextFieldMap = fieldMap?.[key];
           if (!nextFieldMap) continue;
           if (Array.isArray(contextData) && typeof nextFieldMap === "object") {
@@ -343,14 +366,10 @@ export default class<T extends IEntity> {
       await resolveLevel(
         relationships,
         data,
-        async (
-          fieldPath,
-          contextData,
-          { _: { collectionPath } = { collectionPath: null } }
-        ) => {
+        async (fieldPath, contextData, { _: relation }) => {
           const fieldValue = contextData?.[fieldPath];
           const valueIsArray = Array.isArray(fieldValue);
-          if (!fieldValue) return null;
+          if (!fieldValue && !relation?.collectionPath) return null;
           const fieldData = valueIsArray
             ? (
                 await Promise.all(
@@ -359,12 +378,18 @@ export default class<T extends IEntity> {
               ).map(cleanDocData)
             : fieldValue?.id
             ? cleanDocData(await getDoc(fieldValue?._path || fieldValue?.path))
-            : typeof fieldValue === "string" && collectionPath
+            : typeof fieldValue === "string" && relation?.collectionPath
             ? cleanDocData(
                 await getDoc(
-                  `${collectionPath ? `${collectionPath}/` : ""}${fieldValue}`
+                  `${
+                    relation?.collectionPath
+                      ? `${relation.collectionPath}/`
+                      : ""
+                  }${fieldValue}`
                 )
               )
+            : !fieldValue && relation?.collectionPath
+            ? await listDocs(relation?.collectionPath, relation)
             : null;
           return fieldData;
         }
