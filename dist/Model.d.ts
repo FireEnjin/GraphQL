@@ -116,7 +116,7 @@ export default class<T extends IEntity> {
     /**
      * Paginate a collection to page results
      */
-    paginate<I>(options?: QueryOptions, onPaginate?: (query: any, queryOptions: QueryOptions, hookOptions?: {
+    paginate<I = T>(options?: QueryOptions, onPaginate?: (query: any, queryOptions: QueryOptions, hookOptions?: {
         context: any;
         type: string;
     }) => any, hookOptions?: {

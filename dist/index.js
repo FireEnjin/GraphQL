@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.session = exports.Model = exports.ListQueryInput = exports.getTokenFromHeader = exports.env = exports.createResolver = exports.connectFirestore = void 0;
+exports.routesForDocument = exports.routesForCollection = exports.session = exports.Model = exports.ListQueryInput = exports.getTokenFromHeader = exports.env = exports.createResolver = exports.connectFirestore = void 0;
 const Model_1 = __importDefault(require("./Model"));
 exports.Model = Model_1.default;
 const ListQuery_1 = __importDefault(require("./inputs/ListQuery"));
@@ -18,3 +18,7 @@ const createResolver_1 = __importDefault(require("./helpers/createResolver"));
 exports.createResolver = createResolver_1.default;
 const session_1 = __importDefault(require("./helpers/session"));
 exports.session = session_1.default;
+const routesForCollection_1 = __importDefault(require("./helpers/routesForCollection"));
+exports.routesForCollection = routesForCollection_1.default;
+const routesForDocument_1 = __importDefault(require("./helpers/routesForDocument"));
+exports.routesForDocument = routesForDocument_1.default;

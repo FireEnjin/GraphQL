@@ -5,4 +5,6 @@ import getTokenFromHeader from "./helpers/getTokenFromHeader";
 import env from "./helpers/env";
 import createResolver from "./helpers/createResolver";
 import session from "./helpers/session";
-export { connectFirestore, createResolver, env, getTokenFromHeader, ListQueryInput, Model, session, };
+import routesForCollection from "./helpers/routesForCollection";
+import routesForDocument from "./helpers/routesForDocument";
+export { connectFirestore, createResolver, env, getTokenFromHeader, ListQueryInput, Model, session, routesForCollection, routesForDocument, };
