@@ -91,6 +91,7 @@ class default_1 {
     async paginate(options = {}, onPaginate, hookOptions) {
         var _a, _b;
         const output = [];
+        const relationships = options === null || options === void 0 ? void 0 : options.relationships;
         const orderBy = (options === null || options === void 0 ? void 0 : options.orderBy) || this.order;
         let query = this.buildQuery(options);
         if (onPaginate && typeof onPaginate === "function") {
@@ -113,6 +114,89 @@ class default_1 {
             }
             if (((_b = entity === null || entity === void 0 ? void 0 : entity.updatedAt) === null || _b === void 0 ? void 0 : _b.toDate) && this.timestamps) {
                 entity.updatedAt = entity.updatedAt.toDate().toISOString();
+            }
+            if (relationships) {
+                const rootDocPath = `${this.ref().path}/${doc.id}`;
+                const queryCache = {
+                    [rootDocPath]: { ...entity, _path: rootDocPath },
+                };
+                const firestore = this.ref().firestore;
+                const getPathFromDoc = (doc) => {
+                    var _a, _b, _c, _d, _e, _f, _g, _h;
+                    return (doc === null || doc === void 0 ? void 0 : doc.path) ||
+                        ((_a = doc === null || doc === void 0 ? void 0 : doc.ref) === null || _a === void 0 ? void 0 : _a.path) ||
+                        ((_e = (_d = (_c = (_b = doc === null || doc === void 0 ? void 0 : doc._ref) === null || _b === void 0 ? void 0 : _b._path) === null || _c === void 0 ? void 0 : _c.segments) === null || _d === void 0 ? void 0 : _d.join) === null || _e === void 0 ? void 0 : _e.call(_d, "/")) ||
+                        ((_h = (_g = (_f = doc === null || doc === void 0 ? void 0 : doc._path) === null || _f === void 0 ? void 0 : _f.segments) === null || _g === void 0 ? void 0 : _g.join) === null || _h === void 0 ? void 0 : _h.call(_g, "/"));
+                };
+                const getDoc = async (path) => {
+                    if (!path)
+                        return;
+                    const docData = { ...((queryCache === null || queryCache === void 0 ? void 0 : queryCache[path]) || {}) };
+                    const id = docData === null || docData === void 0 ? void 0 : docData.id;
+                    const query = (queryCache === null || queryCache === void 0 ? void 0 : queryCache[path])
+                        ? new Promise((res) => res({
+                            id,
+                            data: () => docData,
+                            ref: {
+                                id,
+                                path,
+                            },
+                        }))
+                        : firestore.doc(path).get();
+                    return query;
+                };
+                const listDocs = async (collectionPath, options) => {
+                    const query = this.buildQuery(options, firestore.collection(collectionPath), true);
+                    const { docs } = await query.get();
+                    const documents = await Promise.all(docs.map((doc) => getDoc(getPathFromDoc(doc))));
+                    return documents.map(cleanDocData);
+                };
+                const resolveLevel = async (fieldMap, contextData, callback) => {
+                    for (const key of Object.keys(fieldMap).filter((k) => k !== "_")) {
+                        const nextFieldMap = fieldMap === null || fieldMap === void 0 ? void 0 : fieldMap[key];
+                        if (!nextFieldMap)
+                            continue;
+                        if (Array.isArray(contextData) &&
+                            typeof nextFieldMap === "object") {
+                            await Promise.all(contextData.map((d) => resolveLevel(fieldMap, d, callback)));
+                            continue;
+                        }
+                        if (typeof callback === "function") {
+                            contextData[key] = await callback(key, contextData, nextFieldMap);
+                        }
+                        if (typeof nextFieldMap === "object")
+                            await resolveLevel(nextFieldMap, contextData[key], callback);
+                    }
+                };
+                const cleanDocData = (doc) => {
+                    const path = getPathFromDoc(doc);
+                    const data = (queryCache[path] && { ...queryCache[path] }) || {
+                        id: (doc === null || doc === void 0 ? void 0 : doc.id) || null,
+                        ...(0, cleanObjectOfReferences_1.default)(doc.data(), true),
+                        _path: path,
+                    };
+                    if (!queryCache[path])
+                        queryCache[path] = data;
+                    return data;
+                };
+                await resolveLevel(relationships, entity, async (fieldPath, contextData, { _: relation }) => {
+                    const fieldValue = contextData === null || contextData === void 0 ? void 0 : contextData[fieldPath];
+                    const valueIsArray = Array.isArray(fieldValue);
+                    if (!fieldValue && !(relation === null || relation === void 0 ? void 0 : relation.collectionPath))
+                        return null;
+                    const fieldData = valueIsArray
+                        ? (await Promise.all(fieldValue.map((doc) => getDoc(getPathFromDoc(doc))))).map(cleanDocData)
+                        : (fieldValue === null || fieldValue === void 0 ? void 0 : fieldValue.id)
+                            ? cleanDocData(await getDoc((fieldValue === null || fieldValue === void 0 ? void 0 : fieldValue._path) || (fieldValue === null || fieldValue === void 0 ? void 0 : fieldValue.path)))
+                            : typeof fieldValue === "string" && (relation === null || relation === void 0 ? void 0 : relation.collectionPath)
+                                ? cleanDocData(await getDoc(`${(relation === null || relation === void 0 ? void 0 : relation.collectionPath)
+                                    ? `${relation.collectionPath}/`
+                                    : ""}${fieldValue}`))
+                                : !fieldValue && (relation === null || relation === void 0 ? void 0 : relation.collectionPath)
+                                    ? await listDocs(relation === null || relation === void 0 ? void 0 : relation.collectionPath, relation)
+                                    : null;
+                    return fieldData;
+                });
             }
             output.push(entity);
         }

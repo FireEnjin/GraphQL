@@ -10,7 +10,6 @@ import {
 import { firestore } from "firebase-admin";
 import pluralize from "pluralize";
 import { isValid, parseISO } from "date-fns";
-
 import capFirstLetter from "./helpers/capFirstLetter";
 import createResolver from "./helpers/createResolver";
 import { FirestoreBatch } from "fireorm/lib/src/Batch/FirestoreBatch";
@@ -33,6 +32,9 @@ export interface QueryOptions {
   whereArrayContains?: { [key: string]: any };
   whereArrayContainsAny?: { [key: string]: any };
   whereIn?: { [key: string]: any };
+  relationships?: {
+    [key: string]: { _?: QueryOptions; [subkey: string]: any } | boolean;
+  };
 }
 
 export interface RelationshipQuery {
@@ -170,7 +172,7 @@ export default class<T extends IEntity> {
   /**
    * Paginate a collection to page results
    */
-  async paginate(
+  async paginate<I = T>(
     options: QueryOptions = {},
     onPaginate?: (
       query,
@@ -186,6 +188,7 @@ export default class<T extends IEntity> {
     }
   ): Promise<T[]> {
     const output = [];
+    const relationships = options?.relationships;
     const orderBy = options?.orderBy || this.order;
     let query = this.buildQuery(options);
     if (onPaginate && typeof onPaginate === "function") {
@@ -211,6 +214,125 @@ export default class<T extends IEntity> {
       }
       if (entity?.updatedAt?.toDate && this.timestamps) {
         entity.updatedAt = (entity.updatedAt.toDate() as Date).toISOString();
+      }
+      if (relationships) {
+        const rootDocPath = `${this.ref().path}/${doc.id}`;
+        const queryCache: { [path: string]: any } = {
+          [rootDocPath]: { ...entity, _path: rootDocPath },
+        };
+        const firestore = this.ref().firestore;
+        const getPathFromDoc = (doc: any) =>
+          doc?.path ||
+          doc?.ref?.path ||
+          doc?._ref?._path?.segments?.join?.("/") ||
+          doc?._path?.segments?.join?.("/");
+        const getDoc = async (path: string) => {
+          if (!path) return;
+          const docData = { ...(queryCache?.[path] || {}) };
+          const id = docData?.id;
+          const query = queryCache?.[path]
+            ? new Promise((res) =>
+                res({
+                  id,
+                  data: () => docData,
+                  ref: {
+                    id,
+                    path,
+                  },
+                })
+              )
+            : firestore.doc(path).get();
+
+          return query as Promise<firestore.DocumentSnapshot<I>>;
+        };
+
+        const listDocs = async (
+          collectionPath: string,
+          options: QueryOptions
+        ) => {
+          const query = this.buildQuery(
+            options,
+            firestore.collection(collectionPath),
+            true
+          );
+          const { docs } = await query.get();
+          const documents = await Promise.all(
+            docs.map((doc) => getDoc(getPathFromDoc(doc)))
+          );
+          return documents.map(cleanDocData) as firestore.DocumentSnapshot<I>[];
+        };
+
+        const resolveLevel = async (
+          fieldMap: any,
+          contextData: any,
+          callback: (
+            key: string,
+            contextData: any,
+            fieldMap: any
+          ) => Promise<any>
+        ) => {
+          for (const key of Object.keys(fieldMap).filter((k) => k !== "_")) {
+            const nextFieldMap = fieldMap?.[key];
+            if (!nextFieldMap) continue;
+            if (
+              Array.isArray(contextData) &&
+              typeof nextFieldMap === "object"
+            ) {
+              await Promise.all(
+                contextData.map((d) => resolveLevel(fieldMap, d, callback))
+              );
+              continue;
+            }
+            if (typeof callback === "function") {
+              contextData[key] = await callback(key, contextData, nextFieldMap);
+            }
+            if (typeof nextFieldMap === "object")
+              await resolveLevel(nextFieldMap, contextData[key], callback);
+          }
+        };
+        const cleanDocData = (doc: firestore.DocumentSnapshot<I>) => {
+          const path = getPathFromDoc(doc);
+          const data = (queryCache[path] && { ...queryCache[path] }) || {
+            id: doc?.id || null,
+            ...cleanObjectOfReferences(doc.data(), true),
+            _path: path,
+          };
+          if (!queryCache[path]) queryCache[path] = data;
+          return data;
+        };
+        await resolveLevel(
+          relationships,
+          entity,
+          async (fieldPath, contextData, { _: relation }) => {
+            const fieldValue = contextData?.[fieldPath];
+            const valueIsArray = Array.isArray(fieldValue);
+            if (!fieldValue && !relation?.collectionPath) return null;
+            const fieldData = valueIsArray
+              ? (
+                  await Promise.all(
+                    fieldValue.map((doc) => getDoc(getPathFromDoc(doc)))
+                  )
+                ).map(cleanDocData)
+              : fieldValue?.id
+              ? cleanDocData(
+                  await getDoc(fieldValue?._path || fieldValue?.path)
+                )
+              : typeof fieldValue === "string" && relation?.collectionPath
+              ? cleanDocData(
+                  await getDoc(
+                    `${
+                      relation?.collectionPath
+                        ? `${relation.collectionPath}/`
+                        : ""
+                    }${fieldValue}`
+                  )
+                )
+              : !fieldValue && relation?.collectionPath
+              ? await listDocs(relation?.collectionPath, relation)
+              : null;
+            return fieldData;
+          }
+        );
       }
       output.push(entity);
     }
@@ -558,6 +680,32 @@ export default class<T extends IEntity> {
   whereNotIn(prop: IWherePropParam<T>, val: IFirestoreVal[]) {
     return this.repo().whereNotIn(prop, val);
   }
+
+  /**
+   * Hook that runs on auth
+   * @param method The method being ran
+   * @param data The input data for the request
+   * @param options Extra options for the request
+   *
+   * @returns The document data to be returned
+   */
+  async onAuth?(
+    method?:
+      | "find"
+      | "list"
+      | "read"
+      | "write"
+      | "update"
+      | "create"
+      | "delete",
+    data?: any,
+    options?: {
+      type?: "graphdql" | "rest";
+      requestData?: any;
+      context?: any;
+      roles?: string[];
+    }
+  ): Promise<boolean>;
 
   /**
    * Hook that runs before a document is added. If it returns a falsey value it will stop the creation return null.

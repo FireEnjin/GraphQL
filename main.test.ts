@@ -22,16 +22,19 @@ test("Should test model", async () => {
   }
 
   const users = new UserModel();
-  const user: any = await users.find("ImJf9C8QDhQJnOyV5HET", {
-    friend: {
-      _: {
-        collectionPath: "users",
-        whereEqual: {
-          updatedBy: "~/users/iA7NkGkMV6PKVYaD67S8C1TlXoo1",
+  const user: any = await users.paginate({
+    limit: 4,
+    relationships: {
+      friend: {
+        _: {
+          collectionPath: "users",
+          whereEqual: {
+            updatedBy: "~/users/iA7NkGkMV6PKVYaD67S8C1TlXoo1",
+          },
+          findOne: true,
         },
-        findOne: true,
+        users: {},
       },
-      users: {},
     },
   });
 

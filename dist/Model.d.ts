@@ -34,6 +34,12 @@ export interface QueryOptions {
     whereIn?: {
         [key: string]: any;
     };
+    relationships?: {
+        [key: string]: {
+            _?: QueryOptions;
+            [subkey: string]: any;
+        } | boolean;
+    };
 }
 export interface RelationshipQuery {
     [fieldPath: string]: (RelationshipQuery & {
@@ -110,7 +116,7 @@ export default class<T extends IEntity> {
     /**
      * Paginate a collection to page results
      */
-    paginate(options?: QueryOptions, onPaginate?: (query: any, queryOptions: QueryOptions, hookOptions?: {
+    paginate<I>(options?: QueryOptions, onPaginate?: (query: any, queryOptions: QueryOptions, hookOptions?: {
         context: any;
         type: string;
     }) => any, hookOptions?: {
@@ -131,7 +137,7 @@ export default class<T extends IEntity> {
     /**
      * Commit the current batch of requests
      */
-    commit(): Promise<firestore.WriteResult[]> | Promise<void>;
+    commit(): Promise<void> | Promise<firestore.WriteResult[]>;
     /**
      * Delete a document from a collection
      * @param id The id of the document to delete
@@ -258,6 +264,20 @@ export default class<T extends IEntity> {
      * @param val The values to check for
      */
     whereNotIn(prop: IWherePropParam<T>, val: IFirestoreVal[]): import("fireorm").IQueryBuilder<T>;
+    /**
+     * Hook that runs on auth
+     * @param method The method being ran
+     * @param data The input data for the request
+     * @param options Extra options for the request
+     *
+     * @returns The document data to be returned
+     */
+    onAuth?(method?: "find" | "list" | "read" | "write" | "update" | "create" | "delete", data?: any, options?: {
+        type?: "graphdql" | "rest";
+        requestData?: any;
+        context?: any;
+        roles?: string[];
+    }): Promise<boolean>;
     /**
      * Hook that runs before a document is added. If it returns a falsey value it will stop the creation return null.
      * @param data The input data for the request
