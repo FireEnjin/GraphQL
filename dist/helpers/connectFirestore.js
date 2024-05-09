@@ -25,9 +25,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const admin = __importStar(require("firebase-admin"));
 const fireorm = __importStar(require("fireorm"));
+const app_1 = require("firebase-admin/app");
 function connect(options) {
     var _a;
     const appConfig = {};
+    const activeApps = (0, app_1.getApps)();
     if (!!(options === null || options === void 0 ? void 0 : options.emulate) ||
         (options === null || options === void 0 ? void 0 : options.projectId) ||
         ((_a = process === null || process === void 0 ? void 0 : process.env) === null || _a === void 0 ? void 0 : _a.GCLOUD_PROJECT)) {
@@ -35,7 +37,7 @@ function connect(options) {
         appConfig.storageBucket =
             (options === null || options === void 0 ? void 0 : options.storageBucket) || `${appConfig.projectId}.appspot.com`;
     }
-    if (options === null || options === void 0 ? void 0 : options.serviceAccount) {
+    if ((options === null || options === void 0 ? void 0 : options.serviceAccount) && !activeApps.length) {
         const serviceAccount = require(typeof (options === null || options === void 0 ? void 0 : options.serviceAccount) === "string"
             ? options.serviceAccount
             : `${process.cwd()}/service-account.json`);
@@ -43,9 +45,10 @@ function connect(options) {
         appConfig.databaseURL = `https://${serviceAccount.project_id}.firebaseio.com`;
         appConfig.storageBucket =
             (options === null || options === void 0 ? void 0 : options.storageBucket) || `${serviceAccount.project_id}.appspot.com`;
+        process.env.GOOGLE_CLOUD_PROJECT = serviceAccount.project_id;
     }
-    admin.initializeApp(appConfig);
-    const firestore = admin.firestore();
+    const app = activeApps.length === 0 ? admin.initializeApp(appConfig) : activeApps[0];
+    const firestore = admin.firestore(app);
     const firebaseConfig = {
         ignoreUndefinedProperties: (options === null || options === void 0 ? void 0 : options.ignoreUndefinedProperties) === false ? false : true,
     };
