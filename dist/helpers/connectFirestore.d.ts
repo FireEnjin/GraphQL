@@ -1,4 +1,3 @@
-import * as admin from "firebase-admin";
 export default function connect(options?: {
     app?: any;
     serviceAccount?: string | boolean;
@@ -8,4 +7,4 @@ export default function connect(options?: {
     ignoreUndefinedProperties?: boolean;
     projectId?: string;
     storageBucket?: string;
-}): admin.firestore.Firestore;
+}): FirebaseFirestore.Firestore;

@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const admin = __importStar(require("firebase-admin"));
+const firestore_1 = require("firebase-admin/firestore");
 const fireorm = __importStar(require("fireorm"));
 const app_1 = require("firebase-admin/app");
 function connect(options) {
@@ -41,13 +41,15 @@ function connect(options) {
         const serviceAccount = require(typeof (options === null || options === void 0 ? void 0 : options.serviceAccount) === "string"
             ? options.serviceAccount
             : `${process.cwd()}/service-account.json`);
-        appConfig.credential = admin.credential.cert(serviceAccount);
+        appConfig.credential = (0, app_1.cert)(serviceAccount);
         appConfig.databaseURL = `https://${serviceAccount.project_id}.firebaseio.com`;
         appConfig.storageBucket =
             (options === null || options === void 0 ? void 0 : options.storageBucket) || `${serviceAccount.project_id}.appspot.com`;
         process.env.GOOGLE_CLOUD_PROJECT = serviceAccount.project_id;
     }
-    const firestore = admin.firestore(app);
+    if (!app)
+        app = (0, app_1.initializeApp)(appConfig);
+    const firestore = (0, firestore_1.getFirestore)(app);
     const firebaseConfig = {
         ignoreUndefinedProperties: (options === null || options === void 0 ? void 0 : options.ignoreUndefinedProperties) === false ? false : true,
     };
@@ -55,11 +57,8 @@ function connect(options) {
         firebaseConfig.host = (options === null || options === void 0 ? void 0 : options.host) || "localhost:8080";
         firebaseConfig.ssl = !!(options === null || options === void 0 ? void 0 : options.ssl);
     }
-    if (!app) {
-        admin.initializeApp(appConfig);
-        firestore.settings(firebaseConfig);
-        fireorm.initialize(firestore);
-    }
+    firestore.settings(firebaseConfig);
+    fireorm.initialize(firestore);
     return firestore;
 }
 exports.default = connect;

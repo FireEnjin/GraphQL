@@ -1,6 +1,7 @@
-import * as admin from "firebase-admin";
+import { AppOptions } from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 import * as fireorm from "fireorm";
-import { getApps } from "firebase-admin/app";
+import { initializeApp, getApps, cert } from "firebase-admin/app";
 
 export default function connect(options?: {
   app?: any;
@@ -12,7 +13,7 @@ export default function connect(options?: {
   projectId?: string;
   storageBucket?: string;
 }) {
-  const appConfig: admin.AppOptions = {};
+  const appConfig: AppOptions = {};
   let app = options?.app || getApps()?.[0];
   if (
     !!options?.emulate ||
@@ -27,14 +28,16 @@ export default function connect(options?: {
     const serviceAccount = require(typeof options?.serviceAccount === "string"
       ? options.serviceAccount
       : `${process.cwd()}/service-account.json`);
-    appConfig.credential = admin.credential.cert(serviceAccount);
+    appConfig.credential = cert(serviceAccount);
     appConfig.databaseURL = `https://${serviceAccount.project_id}.firebaseio.com`;
     appConfig.storageBucket =
       options?.storageBucket || `${serviceAccount.project_id}.appspot.com`;
     process.env.GOOGLE_CLOUD_PROJECT = serviceAccount.project_id;
   }
 
-  const firestore = admin.firestore(app);
+  if (!app) app = initializeApp(appConfig);
+
+  const firestore = getFirestore(app);
   const firebaseConfig: FirebaseFirestore.Settings = {
     ignoreUndefinedProperties:
       options?.ignoreUndefinedProperties === false ? false : true,
@@ -43,11 +46,9 @@ export default function connect(options?: {
     firebaseConfig.host = options?.host || "localhost:8080";
     firebaseConfig.ssl = !!options?.ssl;
   }
-  if (!app) {
-    admin.initializeApp(appConfig);
-    firestore.settings(firebaseConfig);
-    fireorm.initialize(firestore);
-  }
+
+  firestore.settings(firebaseConfig);
+  fireorm.initialize(firestore);
 
   return firestore;
 }
