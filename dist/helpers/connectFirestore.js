@@ -47,7 +47,9 @@ function connect(options) {
             (options === null || options === void 0 ? void 0 : options.storageBucket) || `${serviceAccount.project_id}.appspot.com`;
         process.env.GOOGLE_CLOUD_PROJECT = serviceAccount.project_id;
     }
-    const app = activeApps.length === 0 ? admin.initializeApp(appConfig) : activeApps[0];
+    const app = (options === null || options === void 0 ? void 0 : options.app) || activeApps.length === 0
+        ? admin.initializeApp(appConfig)
+        : activeApps[0];
     const firestore = admin.firestore(app);
     const firebaseConfig = {
         ignoreUndefinedProperties: (options === null || options === void 0 ? void 0 : options.ignoreUndefinedProperties) === false ? false : true,
