@@ -13,7 +13,7 @@ export default function connect(options?: {
   storageBucket?: string;
 }) {
   const appConfig: admin.AppOptions = {};
-  const activeApps = getApps();
+  let app = options?.app || getApps()?.[0];
   if (
     !!options?.emulate ||
     options?.projectId ||
@@ -23,7 +23,7 @@ export default function connect(options?: {
     appConfig.storageBucket =
       options?.storageBucket || `${appConfig.projectId}.appspot.com`;
   }
-  if (options?.serviceAccount && !activeApps.length) {
+  if (options?.serviceAccount && !app) {
     const serviceAccount = require(typeof options?.serviceAccount === "string"
       ? options.serviceAccount
       : `${process.cwd()}/service-account.json`);
@@ -33,9 +33,7 @@ export default function connect(options?: {
       options?.storageBucket || `${serviceAccount.project_id}.appspot.com`;
     process.env.GOOGLE_CLOUD_PROJECT = serviceAccount.project_id;
   }
-  const app =
-    options?.app ||
-    (activeApps.length === 0 ? admin.initializeApp(appConfig) : activeApps[0]);
+
   const firestore = admin.firestore(app);
   const firebaseConfig: FirebaseFirestore.Settings = {
     ignoreUndefinedProperties:
@@ -45,9 +43,11 @@ export default function connect(options?: {
     firebaseConfig.host = options?.host || "localhost:8080";
     firebaseConfig.ssl = !!options?.ssl;
   }
-
-  firestore.settings(firebaseConfig);
-  fireorm.initialize(firestore);
+  if (!app) {
+    admin.initializeApp(appConfig);
+    firestore.settings(firebaseConfig);
+    fireorm.initialize(firestore);
+  }
 
   return firestore;
 }

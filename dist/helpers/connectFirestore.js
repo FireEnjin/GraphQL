@@ -27,17 +27,17 @@ const admin = __importStar(require("firebase-admin"));
 const fireorm = __importStar(require("fireorm"));
 const app_1 = require("firebase-admin/app");
 function connect(options) {
-    var _a;
+    var _a, _b;
     const appConfig = {};
-    const activeApps = (0, app_1.getApps)();
+    let app = (options === null || options === void 0 ? void 0 : options.app) || ((_a = (0, app_1.getApps)()) === null || _a === void 0 ? void 0 : _a[0]);
     if (!!(options === null || options === void 0 ? void 0 : options.emulate) ||
         (options === null || options === void 0 ? void 0 : options.projectId) ||
-        ((_a = process === null || process === void 0 ? void 0 : process.env) === null || _a === void 0 ? void 0 : _a.GCLOUD_PROJECT)) {
+        ((_b = process === null || process === void 0 ? void 0 : process.env) === null || _b === void 0 ? void 0 : _b.GCLOUD_PROJECT)) {
         appConfig.projectId = (options === null || options === void 0 ? void 0 : options.projectId) || process.env.GCLOUD_PROJECT;
         appConfig.storageBucket =
             (options === null || options === void 0 ? void 0 : options.storageBucket) || `${appConfig.projectId}.appspot.com`;
     }
-    if ((options === null || options === void 0 ? void 0 : options.serviceAccount) && !activeApps.length) {
+    if ((options === null || options === void 0 ? void 0 : options.serviceAccount) && !app) {
         const serviceAccount = require(typeof (options === null || options === void 0 ? void 0 : options.serviceAccount) === "string"
             ? options.serviceAccount
             : `${process.cwd()}/service-account.json`);
@@ -47,8 +47,6 @@ function connect(options) {
             (options === null || options === void 0 ? void 0 : options.storageBucket) || `${serviceAccount.project_id}.appspot.com`;
         process.env.GOOGLE_CLOUD_PROJECT = serviceAccount.project_id;
     }
-    const app = (options === null || options === void 0 ? void 0 : options.app) ||
-        (activeApps.length === 0 ? admin.initializeApp(appConfig) : activeApps[0]);
     const firestore = admin.firestore(app);
     const firebaseConfig = {
         ignoreUndefinedProperties: (options === null || options === void 0 ? void 0 : options.ignoreUndefinedProperties) === false ? false : true,
@@ -57,8 +55,11 @@ function connect(options) {
         firebaseConfig.host = (options === null || options === void 0 ? void 0 : options.host) || "localhost:8080";
         firebaseConfig.ssl = !!(options === null || options === void 0 ? void 0 : options.ssl);
     }
-    firestore.settings(firebaseConfig);
-    fireorm.initialize(firestore);
+    if (!app) {
+        admin.initializeApp(appConfig);
+        firestore.settings(firebaseConfig);
+        fireorm.initialize(firestore);
+    }
     return firestore;
 }
 exports.default = connect;
