@@ -3,7 +3,7 @@ import * as fireorm from "fireorm";
 import { getApps } from "firebase-admin/app";
 
 export default function connect(options?: {
-  app?: admin.app.App;
+  app?: any;
   serviceAccount?: string | boolean;
   emulate?: boolean;
   host?: string;
@@ -34,9 +34,8 @@ export default function connect(options?: {
     process.env.GOOGLE_CLOUD_PROJECT = serviceAccount.project_id;
   }
   const app =
-    options?.app || activeApps.length === 0
-      ? admin.initializeApp(appConfig)
-      : activeApps[0];
+    options?.app ||
+    (activeApps.length === 0 ? admin.initializeApp(appConfig) : activeApps[0]);
   const firestore = admin.firestore(app);
   const firebaseConfig: FirebaseFirestore.Settings = {
     ignoreUndefinedProperties:

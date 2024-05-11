@@ -1,6 +1,6 @@
 import * as admin from "firebase-admin";
 export default function connect(options?: {
-    app?: admin.app.App;
+    app?: any;
     serviceAccount?: string | boolean;
     emulate?: boolean;
     host?: string;
