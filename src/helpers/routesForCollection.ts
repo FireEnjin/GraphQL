@@ -1,12 +1,11 @@
 import type { APIRoute } from "astro";
 
-export default function routesForCollection(
-  model: any,
-  options: { role?: string; [key: string]: any } = {}
-) {
+export default function routesForCollection(model: any, options: any = {}) {
   const hookOptions = { type: "rest", ...options };
 
-  const GET: APIRoute = async ({ request }) => {
+  const GET: APIRoute = async ({ request, locals }) => {
+    const user = await locals.user();
+    hookOptions.role = user?.customClaims?.role || null;
     const resource = new model();
     const url = new URL(request.url);
     const params = {};
@@ -16,7 +15,7 @@ export default function routesForCollection(
     if (
       (typeof resource.onAuth === "function" &&
         !(await resource.onAuth("list", params, hookOptions))) ||
-      (model?.auth?.list && !model?.auth?.list?.includes?.(options?.role))
+      (model?.auth?.list && !model?.auth?.list?.includes?.(hookOptions.role))
     )
       return new Response("Permission Denied!", {
         status: 400,
@@ -34,13 +33,16 @@ export default function routesForCollection(
     );
   };
 
-  const POST: APIRoute = async ({ request }) => {
+  const POST: APIRoute = async ({ request, locals }) => {
+    const user = await locals.user();
+    hookOptions.role = user?.customClaims?.role || null;
     const resource = new model();
     const requestInput = await request.json();
     if (
       (typeof resource?.onAuth === "function" &&
         !(await resource.onAuth("create", requestInput, hookOptions))) ||
-      (model?.auth?.create && !model?.auth?.create?.includes?.(options?.role))
+      (model?.auth?.create &&
+        !model?.auth?.create?.includes?.(hookOptions?.role))
     )
       return new Response("Permission Denied!", {
         status: 400,

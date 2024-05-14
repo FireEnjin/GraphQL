@@ -46,6 +46,21 @@ export interface RelationshipQuery {
 }
 
 export default class<T extends IEntity> {
+  /**
+   * The auth permissions object for the model
+   */
+  auth: {
+    find?: string[];
+    list?: string[];
+    read?: string[];
+    write?: string[];
+    update?: string[];
+    create?: string[];
+    delete?: string[];
+  };
+  /**
+   * The TypeGraphQL resolver for the model
+   */
   Resolver: any;
   /**
    * The name of the collection in Firestore
@@ -96,6 +111,7 @@ export default class<T extends IEntity> {
         ? options.collectionName
         : pluralize(options.docSchema.name);
     }
+    this.auth = options?.auth || {};
     if (options && !options.disableResolvers && options.docSchema) {
       this.Resolver = createResolver({
         ...options,

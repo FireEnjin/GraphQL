@@ -70,6 +70,21 @@ export default class<T extends IEntity> {
         };
         disableResolvers?: boolean;
     };
+    /**
+     * The auth permissions object for the model
+     */
+    auth: {
+        find?: string[];
+        list?: string[];
+        read?: string[];
+        write?: string[];
+        update?: string[];
+        create?: string[];
+        delete?: string[];
+    };
+    /**
+     * The TypeGraphQL resolver for the model
+     */
     Resolver: any;
     /**
      * The name of the collection in Firestore

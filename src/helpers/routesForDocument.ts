@@ -1,38 +1,50 @@
 import type { APIRoute } from "astro";
 
-export default function routesForDocument(model: any, options: {role?: string; [key: string]: any} = {}) {
+export default function routesForDocument(
+  model: any,
+  options: { role?: string; [key: string]: any } = {}
+) {
   const hookOptions = { type: "rest", ...options };
 
-  const DELETE: APIRoute = async ({ params, request }) => {
+  const DELETE: APIRoute = async ({ params, locals }) => {
+    const user = await locals.user();
+    hookOptions.role = user?.customClaims?.role || null;
     const resource = new model();
     if (
       (typeof resource.onAuth === "function" &&
-      !(await resource.onAuth("delete", params, hookOptions))) || (model?.auth?.delete && !model?.auth?.delete?.includes?.(options?.role))
+        !(await resource.onAuth("delete", params, hookOptions))) ||
+      (model?.auth?.delete &&
+        !model?.auth?.delete?.includes?.(hookOptions?.role))
     )
       return new Response("Permission Denied!", {
         status: 400,
       });
     let result = await resource.find(params?.id);
-    if (typeof resource?.onBeforeDelete === "function") result = await resource.onBeforeDelete(result, {});
+    if (typeof resource?.onBeforeDelete === "function")
+      result = await resource.onBeforeDelete(result, {});
 
-    if (!result) return new Response("Document not deleted because of onBeforeDelete hook", {
-      status: 400,
-    });
+    if (!result)
+      return new Response(
+        "Document not deleted because of onBeforeDelete hook",
+        {
+          status: 400,
+        }
+      );
 
     try {
       await resource.delete(params?.id);
     } catch (e) {
-      return new Response(e.message, {status: 400});
+      return new Response(e.message, { status: 400 });
     }
-    
+
     if (typeof resource?.onAfterDelete === "function")
       result = await resource.onAfterDelete(result, hookOptions);
-    return new Response(
-      JSON.stringify(result)
-    );
+    return new Response(JSON.stringify(result));
   };
 
-  const GET: APIRoute = async ({ params, request }) => {
+  const GET: APIRoute = async ({ params, request, locals }) => {
+    const user = await locals.user();
+    hookOptions.role = user?.customClaims?.role || null;
     const resource = new model();
     const url = new URL(request.url);
     for (const [key, value] of new URLSearchParams(url.search).entries()) {
@@ -40,7 +52,8 @@ export default function routesForDocument(model: any, options: {role?: string; [
     }
     if (
       (typeof resource.onAuth === "function" &&
-      !(await resource.onAuth("find", params, hookOptions))) || (model?.auth?.find && !model?.auth?.find?.includes?.(options?.role))
+        !(await resource.onAuth("find", params, hookOptions))) ||
+      (model?.auth?.find && !model?.auth?.find?.includes?.(hookOptions?.role))
     )
       return new Response("Permission Denied!", {
         status: 400,
@@ -51,19 +64,19 @@ export default function routesForDocument(model: any, options: {role?: string; [
         : await resource.find(params?.id, params?.relationships);
     if (typeof resource?.onAfterFind === "function")
       result = await resource.onAfterFind(params?.id, hookOptions);
-    return new Response(
-      JSON.stringify(
-        result
-      )
-    );
+    return new Response(JSON.stringify(result));
   };
 
-  const POST: APIRoute = async ({ params, request }) => {
+  const POST: APIRoute = async ({ params, request, locals }) => {
+    const user = await locals.user();
+    hookOptions.role = user?.customClaims?.role || null;
     const resource = new model();
-    const requestInput = {...await request.json(), ...params};
+    const requestInput = { ...(await request.json()), ...params };
     if (
       (typeof resource?.onAuth === "function" &&
-      !(await resource.onAuth("update", requestInput, hookOptions))) || (model?.auth?.update && !model?.auth?.update?.includes?.(options?.role))
+        !(await resource.onAuth("update", requestInput, hookOptions))) ||
+      (model?.auth?.update &&
+        !model?.auth?.update?.includes?.(hookOptions?.role))
     )
       return new Response("Permission Denied!", {
         status: 400,
@@ -72,8 +85,8 @@ export default function routesForDocument(model: any, options: {role?: string; [
       typeof resource?.onBeforeEdit === "function"
         ? await resource.onBeforeEdit(requestInput, hookOptions)
         : typeof resource?.onBeforeWrite === "function"
-          ? await resource.onBeforeWrite(requestInput, hookOptions)
-          : requestInput;
+        ? await resource.onBeforeWrite(requestInput, hookOptions)
+        : requestInput;
     if (docData === false) {
       return new Response("No data for doc!", {
         status: 400,
@@ -87,8 +100,8 @@ export default function routesForDocument(model: any, options: {role?: string; [
         typeof resource?.onAfterEdit === "function"
           ? await resource.onAfterEdit(data, hookOptions)
           : typeof resource?.onAfterWrite === "function"
-            ? await resource.onAfterWrite(data, hookOptions)
-            : data
+          ? await resource.onAfterWrite(data, hookOptions)
+          : data
       )
     );
   };
