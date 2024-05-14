@@ -14,7 +14,8 @@ function routesForCollection(model, options = {}) {
         }
         if ((typeof resource.onAuth === "function" &&
             !(await resource.onAuth("list", params, hookOptions))) ||
-            (((_b = model === null || model === void 0 ? void 0 : model.auth) === null || _b === void 0 ? void 0 : _b.list) && !((_e = (_d = (_c = model === null || model === void 0 ? void 0 : model.auth) === null || _c === void 0 ? void 0 : _c.list) === null || _d === void 0 ? void 0 : _d.includes) === null || _e === void 0 ? void 0 : _e.call(_d, hookOptions.role))))
+            (((_b = resource === null || resource === void 0 ? void 0 : resource.auth) === null || _b === void 0 ? void 0 : _b.list) &&
+                !((_e = (_d = (_c = resource === null || resource === void 0 ? void 0 : resource.auth) === null || _c === void 0 ? void 0 : _c.list) === null || _d === void 0 ? void 0 : _d.includes) === null || _e === void 0 ? void 0 : _e.call(_d, hookOptions.role))))
             return new Response("Permission Denied!", {
                 status: 400,
             });
@@ -35,8 +36,8 @@ function routesForCollection(model, options = {}) {
         const requestInput = await request.json();
         if ((typeof (resource === null || resource === void 0 ? void 0 : resource.onAuth) === "function" &&
             !(await resource.onAuth("create", requestInput, hookOptions))) ||
-            (((_b = model === null || model === void 0 ? void 0 : model.auth) === null || _b === void 0 ? void 0 : _b.create) &&
-                !((_e = (_d = (_c = model === null || model === void 0 ? void 0 : model.auth) === null || _c === void 0 ? void 0 : _c.create) === null || _d === void 0 ? void 0 : _d.includes) === null || _e === void 0 ? void 0 : _e.call(_d, hookOptions === null || hookOptions === void 0 ? void 0 : hookOptions.role))))
+            (((_b = resource === null || resource === void 0 ? void 0 : resource.auth) === null || _b === void 0 ? void 0 : _b.create) &&
+                !((_e = (_d = (_c = resource === null || resource === void 0 ? void 0 : resource.auth) === null || _c === void 0 ? void 0 : _c.create) === null || _d === void 0 ? void 0 : _d.includes) === null || _e === void 0 ? void 0 : _e.call(_d, hookOptions === null || hookOptions === void 0 ? void 0 : hookOptions.role))))
             return new Response("Permission Denied!", {
                 status: 400,
             });

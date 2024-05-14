@@ -13,8 +13,8 @@ export default function routesForDocument(
     if (
       (typeof resource.onAuth === "function" &&
         !(await resource.onAuth("delete", params, hookOptions))) ||
-      (model?.auth?.delete &&
-        !model?.auth?.delete?.includes?.(hookOptions?.role))
+      (resource?.auth?.delete &&
+        !resource?.auth?.delete?.includes?.(hookOptions?.role))
     )
       return new Response("Permission Denied!", {
         status: 400,
@@ -53,7 +53,8 @@ export default function routesForDocument(
     if (
       (typeof resource.onAuth === "function" &&
         !(await resource.onAuth("find", params, hookOptions))) ||
-      (model?.auth?.find && !model?.auth?.find?.includes?.(hookOptions?.role))
+      (resource?.auth?.find &&
+        !resource?.auth?.find?.includes?.(hookOptions?.role))
     )
       return new Response("Permission Denied!", {
         status: 400,
@@ -63,7 +64,7 @@ export default function routesForDocument(
         ? await resource.onBeforeFind(params?.id, hookOptions)
         : await resource.find(params?.id, params?.relationships);
     if (typeof resource?.onAfterFind === "function")
-      result = await resource.onAfterFind(params?.id, hookOptions);
+      result = await resource.onAfterFind(result, hookOptions);
     return new Response(JSON.stringify(result));
   };
 
@@ -75,8 +76,8 @@ export default function routesForDocument(
     if (
       (typeof resource?.onAuth === "function" &&
         !(await resource.onAuth("update", requestInput, hookOptions))) ||
-      (model?.auth?.update &&
-        !model?.auth?.update?.includes?.(hookOptions?.role))
+      (resource?.auth?.update &&
+        !resource?.auth?.update?.includes?.(hookOptions?.role))
     )
       return new Response("Permission Denied!", {
         status: 400,

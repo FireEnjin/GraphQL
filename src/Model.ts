@@ -918,7 +918,7 @@ export default class<T extends IEntity> {
    * @returns The document data to be returned
    */
   async onAfterFind?(
-    id?: string,
+    data: any,
     options?: {
       type?: "graphdql" | "rest";
       requestData?: any;

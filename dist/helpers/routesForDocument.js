@@ -9,8 +9,8 @@ function routesForDocument(model, options = {}) {
         const resource = new model();
         if ((typeof resource.onAuth === "function" &&
             !(await resource.onAuth("delete", params, hookOptions))) ||
-            (((_b = model === null || model === void 0 ? void 0 : model.auth) === null || _b === void 0 ? void 0 : _b.delete) &&
-                !((_e = (_d = (_c = model === null || model === void 0 ? void 0 : model.auth) === null || _c === void 0 ? void 0 : _c.delete) === null || _d === void 0 ? void 0 : _d.includes) === null || _e === void 0 ? void 0 : _e.call(_d, hookOptions === null || hookOptions === void 0 ? void 0 : hookOptions.role))))
+            (((_b = resource === null || resource === void 0 ? void 0 : resource.auth) === null || _b === void 0 ? void 0 : _b.delete) &&
+                !((_e = (_d = (_c = resource === null || resource === void 0 ? void 0 : resource.auth) === null || _c === void 0 ? void 0 : _c.delete) === null || _d === void 0 ? void 0 : _d.includes) === null || _e === void 0 ? void 0 : _e.call(_d, hookOptions === null || hookOptions === void 0 ? void 0 : hookOptions.role))))
             return new Response("Permission Denied!", {
                 status: 400,
             });
@@ -42,7 +42,8 @@ function routesForDocument(model, options = {}) {
         }
         if ((typeof resource.onAuth === "function" &&
             !(await resource.onAuth("find", params, hookOptions))) ||
-            (((_b = model === null || model === void 0 ? void 0 : model.auth) === null || _b === void 0 ? void 0 : _b.find) && !((_e = (_d = (_c = model === null || model === void 0 ? void 0 : model.auth) === null || _c === void 0 ? void 0 : _c.find) === null || _d === void 0 ? void 0 : _d.includes) === null || _e === void 0 ? void 0 : _e.call(_d, hookOptions === null || hookOptions === void 0 ? void 0 : hookOptions.role))))
+            (((_b = resource === null || resource === void 0 ? void 0 : resource.auth) === null || _b === void 0 ? void 0 : _b.find) &&
+                !((_e = (_d = (_c = resource === null || resource === void 0 ? void 0 : resource.auth) === null || _c === void 0 ? void 0 : _c.find) === null || _d === void 0 ? void 0 : _d.includes) === null || _e === void 0 ? void 0 : _e.call(_d, hookOptions === null || hookOptions === void 0 ? void 0 : hookOptions.role))))
             return new Response("Permission Denied!", {
                 status: 400,
             });
@@ -50,7 +51,7 @@ function routesForDocument(model, options = {}) {
             ? await resource.onBeforeFind(params === null || params === void 0 ? void 0 : params.id, hookOptions)
             : await resource.find(params === null || params === void 0 ? void 0 : params.id, params === null || params === void 0 ? void 0 : params.relationships);
         if (typeof (resource === null || resource === void 0 ? void 0 : resource.onAfterFind) === "function")
-            result = await resource.onAfterFind(params === null || params === void 0 ? void 0 : params.id, hookOptions);
+            result = await resource.onAfterFind(result, hookOptions);
         return new Response(JSON.stringify(result));
     };
     const POST = async ({ params, request, locals }) => {
@@ -61,8 +62,8 @@ function routesForDocument(model, options = {}) {
         const requestInput = { ...(await request.json()), ...params };
         if ((typeof (resource === null || resource === void 0 ? void 0 : resource.onAuth) === "function" &&
             !(await resource.onAuth("update", requestInput, hookOptions))) ||
-            (((_b = model === null || model === void 0 ? void 0 : model.auth) === null || _b === void 0 ? void 0 : _b.update) &&
-                !((_e = (_d = (_c = model === null || model === void 0 ? void 0 : model.auth) === null || _c === void 0 ? void 0 : _c.update) === null || _d === void 0 ? void 0 : _d.includes) === null || _e === void 0 ? void 0 : _e.call(_d, hookOptions === null || hookOptions === void 0 ? void 0 : hookOptions.role))))
+            (((_b = resource === null || resource === void 0 ? void 0 : resource.auth) === null || _b === void 0 ? void 0 : _b.update) &&
+                !((_e = (_d = (_c = resource === null || resource === void 0 ? void 0 : resource.auth) === null || _c === void 0 ? void 0 : _c.update) === null || _d === void 0 ? void 0 : _d.includes) === null || _e === void 0 ? void 0 : _e.call(_d, hookOptions === null || hookOptions === void 0 ? void 0 : hookOptions.role))))
             return new Response("Permission Denied!", {
                 status: 400,
             });

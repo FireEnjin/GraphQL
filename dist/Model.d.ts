@@ -443,7 +443,7 @@ export default class<T extends IEntity> {
      *
      * @returns The document data to be returned
      */
-    onAfterFind?(id?: string, options?: {
+    onAfterFind?(data: any, options?: {
         type?: "graphdql" | "rest";
         requestData?: any;
         context?: any;

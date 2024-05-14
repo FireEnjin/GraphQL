@@ -15,7 +15,8 @@ export default function routesForCollection(model: any, options: any = {}) {
     if (
       (typeof resource.onAuth === "function" &&
         !(await resource.onAuth("list", params, hookOptions))) ||
-      (model?.auth?.list && !model?.auth?.list?.includes?.(hookOptions.role))
+      (resource?.auth?.list &&
+        !resource?.auth?.list?.includes?.(hookOptions.role))
     )
       return new Response("Permission Denied!", {
         status: 400,
@@ -41,8 +42,8 @@ export default function routesForCollection(model: any, options: any = {}) {
     if (
       (typeof resource?.onAuth === "function" &&
         !(await resource.onAuth("create", requestInput, hookOptions))) ||
-      (model?.auth?.create &&
-        !model?.auth?.create?.includes?.(hookOptions?.role))
+      (resource?.auth?.create &&
+        !resource?.auth?.create?.includes?.(hookOptions?.role))
     )
       return new Response("Permission Denied!", {
         status: 400,
