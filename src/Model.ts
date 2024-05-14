@@ -49,7 +49,7 @@ export default class<T extends IEntity> {
   /**
    * The auth permissions object for the model
    */
-  auth: {
+  public auth: {
     find?: string[];
     list?: string[];
     read?: string[];
@@ -110,8 +110,8 @@ export default class<T extends IEntity> {
       this.collectionName = options.collectionName
         ? options.collectionName
         : pluralize(options.docSchema.name);
+      if (options?.auth) this.auth = options.auth;
     }
-    this.auth = options?.auth || {};
     if (options && !options.disableResolvers && options.docSchema) {
       this.Resolver = createResolver({
         ...options,

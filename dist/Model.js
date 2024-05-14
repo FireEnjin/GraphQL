@@ -21,8 +21,9 @@ class default_1 {
             this.collectionName = options.collectionName
                 ? options.collectionName
                 : (0, pluralize_1.default)(options.docSchema.name);
+            if (options === null || options === void 0 ? void 0 : options.auth)
+                this.auth = options.auth;
         }
-        this.auth = (options === null || options === void 0 ? void 0 : options.auth) || {};
         if (options && !options.disableResolvers && options.docSchema) {
             this.Resolver = (0, createResolver_1.default)({
                 ...options,
